@@ -115,7 +115,7 @@ def insert_resources_into_notebook(nb_path, resources_dir):
 
 # ---------- Run ----------
 if __name__ == "__main__":
-    notebook_file = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\udemy_notebooks_enhanced\397068__Selenium_Webdriver_with_PYTHON_from_Scratch_+_Frameworks_enhanced_v2.ipynb"
-    resources_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\Resourcesdownloads"
+    notebook_file = r"./udemy_notebooks_enhanced/397068__Selenium_Webdriver_with_PYTHON_from_Scratch_+_Frameworks_enhanced_v2.ipynb"
+    resources_dir = r"./Resourcesdownloads"
 
     insert_resources_into_notebook(notebook_file, resources_dir)

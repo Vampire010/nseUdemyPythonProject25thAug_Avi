@@ -102,7 +102,7 @@ class UdemySupplementaryFetcher:
 
 # ======================= USAGE =======================
 if __name__ == "__main__":
-    base_folder = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\udemyDownloads"
+    base_folder = r"./udemyDownloads"
     input_file = os.path.join(base_folder, "udemy_courses.xlsx")
     output_file = os.path.join(base_folder, "udemy_supplementary_files.xlsx")
     auth_file = "Authentication.json"   # contains {"access_token": "XXXX"}

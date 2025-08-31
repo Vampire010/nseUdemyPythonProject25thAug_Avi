@@ -85,8 +85,8 @@ def generate_notebooks(docx_path, output_dir, excel_path):
 
 # ---------- Main ----------
 if __name__ == "__main__":
-    docx_path = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\udemyDownloads\DockerExample.docx"
-    output_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\UdemyCourses"
-    excel_path = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\Udemy\udemyDownloads\udemy_resources.xlsx"
+    docx_path = r"./udemyDownloads\DockerExample.docx"
+    output_dir = r"./UdemyCourses"
+    excel_path = r"./udemyDownloads/udemy_resources.xlsx"
 
     generate_notebooks(docx_path, output_dir, excel_path)
