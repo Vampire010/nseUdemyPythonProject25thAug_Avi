@@ -8,7 +8,7 @@ from getCookiesFromNSEIndia import NSECookieManager
 class CorporateAnnouncementsFetcher:
     def __init__(self):
         # Fixed export folder
-        self.export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)
 
         # Step 1: Get cookies safely

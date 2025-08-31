@@ -8,3 +8,5 @@
 .vs/nseDemoUemyPythonProject/CopilotIndices/17.14.995.13737/SemanticSymbols.db-wal
 .vs/nseDemoUemyPythonProject/CopilotIndices/17.14.995.13737/SemanticSymbols.db-shm
 /.vs/nseDemoUemyPythonProject
+*.db-wal
+/.vs/nseDemoUemyPythonProject/CopilotIndices/17.14.995.13737

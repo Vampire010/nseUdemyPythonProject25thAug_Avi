@@ -31,7 +31,7 @@ class OptionChainMonitor:
         self.url = f"https://www.nseindia.com/api/option-chain-v3?type=Indices&symbol={self.symbol}&expiry={self.expiry}"
         self.headers = self._make_headers(cookie_str)
 
-        self.export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)
 
         self.output_file = os.path.join(self.export_dir, f"OptionChain_run_monitor_{self.symbol}_{self.expiry}.xlsx")

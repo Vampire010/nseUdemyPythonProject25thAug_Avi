@@ -10,7 +10,7 @@ class NseDataFetcher:
 
     def __init__(self):
         # Export folder path
-        self.export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)  # Create if doesn't exist
 
         # --- Step 1: Get cookies safely ---

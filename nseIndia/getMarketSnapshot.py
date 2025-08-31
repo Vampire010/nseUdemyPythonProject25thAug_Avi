@@ -7,7 +7,7 @@ from getCookiesFromNSEIndia import NSECookieManager
 class NSEMarketSnapshotFetcher:
     def __init__(self):
         """Initialize with cookies from NSECookieManager and set output path."""
-        self.export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)  # Create folder if it doesn't exist
         self.output_file = os.path.join(self.export_dir, "MarketSnapshotTopGainers.xlsx")
 

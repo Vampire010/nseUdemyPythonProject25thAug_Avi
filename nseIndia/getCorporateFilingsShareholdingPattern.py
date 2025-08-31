@@ -43,7 +43,7 @@ class CorporateShareHoldingsFetcher:
         self.headers = self._make_headers(cookie_str)
 
         # Export path
-        export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        export_dir = r"./exportedData"
         os.makedirs(export_dir, exist_ok=True)
         self.output_file = os.path.join(
             export_dir, f"CorporateShareHoldings_{self.today_str}.xlsx"

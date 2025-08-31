@@ -135,7 +135,7 @@ class NseTestDataExporter:
 
     def export_to_excel(self, broad_indices_dict, gainers_dict, filename="nse_Broad_SectoralIndices_combined_data.xlsx"):
         try:
-            export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+            export_dir = r"./exportedData"
             os.makedirs(export_dir, exist_ok=True)  # create folder if it doesn't exist
             file_path = os.path.join(export_dir, filename)
 

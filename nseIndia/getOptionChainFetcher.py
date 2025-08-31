@@ -31,7 +31,7 @@ class OptionChainFetcher:
         self.url = f"https://www.nseindia.com/api/option-chain-v3?type=Indices&symbol={self.symbol}&expiry={self.expiry}"
         self.headers = self._make_headers(cookie_str)
 
-        export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        export_dir = r"./exportedData"
         os.makedirs(export_dir, exist_ok=True)
         self.output_file = os.path.join(
             export_dir, f"OptionChain_{self.symbol}_{self.expiry}_{self.today_str}.xlsx"

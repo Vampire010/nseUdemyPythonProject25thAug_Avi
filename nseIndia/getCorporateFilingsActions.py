@@ -37,7 +37,7 @@ class CorporateActionsFetcher:
         self.headers = self._make_headers(cookie_str)
 
         # Step 3: Output location
-        export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        export_dir = r"./exportedData"
         os.makedirs(export_dir, exist_ok=True)
         self.output_file = os.path.join(export_dir, "CorporateActions.xlsx")
 

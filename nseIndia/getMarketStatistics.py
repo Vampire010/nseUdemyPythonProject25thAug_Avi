@@ -8,7 +8,7 @@ from getCookiesFromNSEIndia import NSECookieManager
 class NSEMarketStatisticsExporter:
     def __init__(self):
         # Export folder
-        self.export_dir = r"C:\Users\giris\source\repos\nseDemoUemyPythonProject\nseIndia\exportedData"
+        self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)
 
         # Step 1: Get cookies
@@ -23,7 +23,15 @@ class NSEMarketStatisticsExporter:
         try:
             with open("nseIndiaCookies.json", "r") as f:
                 auth_data = json.load(f)
-            cookie_str = auth_data.get("Cookie", "")
+            if isinstance(auth_data, list):
+                # Build cookie string from list of dicts
+                cookie_str = "; ".join(
+                    [f"{c['name']}={c['value']}" for c in auth_data if 'name' in c and 'value' in c]
+                )
+            elif isinstance(auth_data, dict):
+                cookie_str = auth_data.get("Cookie", "")
+            else:
+                cookie_str = ""
             print("✅ Cookies loaded from file.")
         except Exception as e:
             print(f"❌ Failed to load cookie JSON: {e}")
