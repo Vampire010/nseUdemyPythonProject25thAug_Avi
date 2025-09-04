@@ -2,23 +2,30 @@
 import pandas as pd
 import json
 import os
-import time
 from datetime import datetime
-from openpyxl import load_workbook
 from getCookiesFromNSEIndia import NSECookieManager
+from getoption_chain_contract_info import OptionChainContractInfoFetcher
 
+# Set your symbol here
+SYMBOL = "BANKNIFTY"
 
-class OptionChainMonitor:
-    def __init__(self, symbol="NIFTY", expiry="21-Aug-2025", interval=60):
+# Dynamically get the first expiry date from contract info API
+contract_info_fetcher = OptionChainContractInfoFetcher(symbol=SYMBOL)
+EXPIRY_DATE = contract_info_fetcher.get_first_expiry_date()
+
+class OptionChainFetcher:
+    def __init__(self, symbol=SYMBOL, expiry=EXPIRY_DATE):
         self.symbol = symbol
         self.expiry = expiry
-        self.interval = interval   # seconds between checks
-        self.prev_df = None        # Store previous data snapshot
+        self.today_str = datetime.now().strftime("%d-%m-%Y")
 
-        # Setup cookies
+        print(f"📅 Fetching Option Chain for {self.symbol} expiry {self.expiry} on {self.today_str}")
+
+        # Fetch cookies
         cm = NSECookieManager()
         self.cookies = cm.fetch_and_save_cookies()
 
+        # Load saved cookies
         cookie_file = "nseIndiaCookies_name_value.json"
         if os.path.exists(cookie_file):
             with open(cookie_file, "r") as f:
@@ -29,12 +36,14 @@ class OptionChainMonitor:
         cookie_str = ";".join([f"{k}={v}" for k, v in auth_data.items()])
 
         self.url = f"https://www.nseindia.com/api/option-chain-v3?type=Indices&symbol={self.symbol}&expiry={self.expiry}"
+        print(f"🔗 URL: {self.url}")
         self.headers = self._make_headers(cookie_str)
 
-        self.export_dir = r"./exportedData"
-        os.makedirs(self.export_dir, exist_ok=True)
-
-        self.output_file = os.path.join(self.export_dir, f"OptionChain_run_monitor_{self.symbol}_{self.expiry}.xlsx")
+        export_dir = r"./exportedData"
+        os.makedirs(export_dir, exist_ok=True)
+        self.output_file = os.path.join(
+            export_dir, f"OptionChain_{self.symbol}_{self.expiry}_{self.today_str}.xlsx"
+        )
 
     def _make_headers(self, cookie_str):
         return {
@@ -48,15 +57,18 @@ class OptionChainMonitor:
     def fetch_data(self):
         response = requests.get(self.url, headers=self.headers, timeout=20)
         response.raise_for_status()
+        #print("✅ Data fetched response : " + response.text)
         return response.json()
 
-    def parse_to_dataframe(self, data):
+    def save_to_excel(self, data):
         if not data or "records" not in data or "data" not in data["records"]:
-            return pd.DataFrame()
+            print("⚠ Unexpected data format")
+            return
 
         rows = []
         for item in data["records"]["data"]:
             strike = item.get("strikePrice", None)
+
             ce = item.get("CE", {})
             pe = item.get("PE", {})
 
@@ -92,6 +104,7 @@ class OptionChainMonitor:
 
         df = pd.DataFrame(rows)
 
+        # Arrange columns like NSE website
         column_order = [
             "CALL_OI", "CALL_CHNG_OI", "CALL_VOLUME", "CALL_IV", "CALL_LTP", "CALL_CHNG",
             "CALL_BID_QTY", "CALL_BID", "CALL_ASK", "CALL_ASK_QTY",
@@ -100,53 +113,18 @@ class OptionChainMonitor:
             "PUT_IV", "PUT_VOLUME", "PUT_CHNG_OI", "PUT_OI"
         ]
 
-        return df[column_order]
+        df = df[column_order]
 
-    def save_to_excel(self, df):
-        # Unique sheet name (date-time with microseconds)
-        timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S-%f")
+        df.to_excel(self.output_file, index=False)
+        print(f"✅ Option Chain table saved: {self.output_file}")
 
+    def run(self):
         try:
-            if not os.path.exists(self.output_file):
-                # First run → create workbook
-                with pd.ExcelWriter(self.output_file, engine="openpyxl") as writer:
-                    df.to_excel(writer, sheet_name=timestamp, index=False)
-                print(f"💾 Created new file: {self.output_file}")
-            else:
-                # Append as a new sheet (guaranteed unique name)
-                with pd.ExcelWriter(self.output_file, engine="openpyxl", mode="a", if_sheet_exists="new") as writer:
-                    df.to_excel(writer, sheet_name=timestamp, index=False)
-                print(f"📑 Added new sheet: {timestamp}")
-
+            data = self.fetch_data()
+            self.save_to_excel(data)
         except Exception as e:
-            print(f"❌ Error saving Excel: {e}")
-
-
-
-
-    def run_monitor(self):
-        print(f"🚀 Monitoring Option Chain for {self.symbol} expiry {self.expiry} every {self.interval}s...")
-        while True:
-            try:
-                data = self.fetch_data()
-                df = self.parse_to_dataframe(data)
-
-                if df.empty:
-                    print(f"⚠ No data fetched at {datetime.now().strftime('%H:%M:%S')}")
-                else:
-                    if self.prev_df is None or not df.equals(self.prev_df):
-                        print(f"🔔 Change detected at {datetime.now().strftime('%H:%M:%S')}")
-                        self.save_to_excel(df)
-                        self.prev_df = df.copy()
-                    else:
-                        print(f"⏳ No change at {datetime.now().strftime('%H:%M:%S')}")
-
-            except Exception as e:
-                print(f"❌ Error: {e}")
-
-            time.sleep(self.interval)
-
+            print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
-    monitor = OptionChainMonitor(symbol="NIFTY", expiry="21-Aug-2025", interval=30)
-    monitor.run_monitor()
+    fetcher = OptionChainFetcher(symbol=SYMBOL, expiry=EXPIRY_DATE)
+    fetcher.run()
