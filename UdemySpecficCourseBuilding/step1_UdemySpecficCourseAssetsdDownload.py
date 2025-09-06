@@ -9,16 +9,15 @@ from tqdm import tqdm
 from helpers import safe_name, get_filename_from_url
 
 class UdemyAssetDownloader:
-    def __init__(self, base_folder, auth_file="Authentication.json", user_id_hint="256172910", sleep_between_calls=0.05, max_workers=16, EXCLUDED_COURSE_IDS=None):
+    def __init__(self, base_folder, auth_file="Authentication.json", user_id_hint="256172910", sleep_between_calls=0.05, max_workers=16):
         self.base_folder = os.path.abspath(base_folder)
         self.auth_file = auth_file
         self.user_id_hint = user_id_hint
         self.sleep = sleep_between_calls
         self.max_workers = max_workers
-        self.EXCLUDED_COURSE_IDS = EXCLUDED_COURSE_IDS or []
 
         os.makedirs(self.base_folder, exist_ok=True)
-        self.downloads_dir = os.path.join(self.base_folder, "notebook")
+        self.downloads_dir = os.path.join(self.base_folder, "downloads")
         os.makedirs(self.downloads_dir, exist_ok=True)
 
         self._load_auth()
@@ -47,21 +46,6 @@ class UdemyAssetDownloader:
         retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
         session.mount('https://', HTTPAdapter(max_retries=retries))
         return session
-
-    def fetch_courses(self):
-        url = "https://www.udemy.com/api-2.0/users/me/subscribed-courses?page_size=50"
-        out = []
-        while url:
-            print(f"Fetching courses page {url}...")
-            r = self.session.get(url, headers=self.auth_header, timeout=30)
-            r.raise_for_status()
-            data = r.json()
-            for c in data.get("results", []):
-                out.append({"id": c.get("id"), "title": c.get("title")})
-            url = data.get("next")
-            time.sleep(self.sleep)
-        print(f"Total courses fetched: {len(out)}")
-        return out
 
     def get_course_name(self, course_id):
         url = f"https://www.udemy.com/api-2.0/courses/{course_id}/?fields[course]=title"
@@ -200,34 +184,25 @@ class UdemyAssetDownloader:
                 print(f"No download URL for asset: {row.get('asset_title')}")
                 return row
 
-            attempt = 0
-            last_exception = None
-            while attempt < 2:
-                try:
-                    with self.session.get(url, stream=True, timeout=120) as resp:
-                        resp.raise_for_status()
-                        total_size = int(resp.headers.get('content-length', 0))
-                        desc = f"{section} | {lecture} | {filename} ({total_size/1024:.1f} KB)"
-                        with open(filepath, "wb") as f, tqdm(
-                            total=total_size, unit='B', unit_scale=True, unit_divisor=1024, desc=desc, leave=False, position=1
-                        ) as pbar:
-                            for chunk in resp.iter_content(65536):
-                                if chunk:
-                                    f.write(chunk)
-                                    pbar.update(len(chunk))
-                    row["local_path"] = filepath
-                    row["already_downloaded"] = False
-                    print(f"Downloaded: {filepath} ({total_size/1024:.1f} KB)")
-                    return row
-                except Exception as e:
-                    last_exception = e
-                    attempt += 1
-                    print(f"Download attempt {attempt} failed for {filepath}: {e}")
-                    time.sleep(1)  # Optional: short delay before retry
-
-            row["local_path"] = None
-            row["download_error"] = str(last_exception)[:200]
-            print(f"Download failed for {filepath} after 2 attempts: {last_exception}")
+            try:
+                with self.session.get(url, stream=True, timeout=120) as resp:
+                    resp.raise_for_status()
+                    total_size = int(resp.headers.get('content-length', 0))
+                    desc = f"{section} | {lecture} | {filename} ({total_size/1024:.1f} KB)"
+                    with open(filepath, "wb") as f, tqdm(
+                        total=total_size, unit='B', unit_scale=True, unit_divisor=1024, desc=desc, leave=False, position=1
+                    ) as pbar:
+                        for chunk in resp.iter_content(65536):
+                            if chunk:
+                                f.write(chunk)
+                                pbar.update(len(chunk))
+                row["local_path"] = filepath
+                row["already_downloaded"] = False
+                print(f"Downloaded: {filepath} ({total_size/1024:.1f} KB)")
+            except Exception as e:
+                row["local_path"] = None
+                row["download_error"] = str(e)[:200]
+                print(f"Download failed for {filepath}: {e}")
             return row
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
@@ -236,39 +211,16 @@ class UdemyAssetDownloader:
                 out.append(future.result())
         return out
 
-    def run(self):
-        courses = self.fetch_courses()
-        for course in courses:
-            course_id = course["id"]
-            course_name = course["title"]
-            if course_id in self.EXCLUDED_COURSE_IDS:
-                print(f"Skipping excluded course: {course_name} ({course_id})")
-                continue
-            print(f"Processing course: {course_name} ({course_id})")
-            assets = self._enumerate_supplementary_assets(course_id, course_name)
-            results = self.download_assets(course_name, assets)
-            total_assets = len(results)
-            downloaded_assets = sum(1 for r in results if r.get('local_path'))
-            percent_complete = (downloaded_assets / total_assets * 100) if total_assets else 0
-            print("\n{:<40} {:>10} {:>15} {:>15}".format("Course Name", "Course ID", "Downloaded", "Completion %"))
-            print("-" * 85)
-            print("{:<40} {:>10} {:>15} {:>14.2f}%".format(
-                course_name[:40], str(course_id), f"{downloaded_assets}/{total_assets}", percent_complete
-            ))
-            print("-" * 85 + "\n")
-
 if __name__ == "__main__":
     BASE = "./udemyDownloads"
     AUTH_FILE = "Authentication.json"
-    
-    # Add more IDs as needed
-    EXCLUDED_COURSE_IDS = [  2186622, 2847630, 3118336, 3195180, 3465656, 1422920,
-    5436376, 5524980, 5720876, 5412670, 5600412, 571876, 5339746, 4299801, 4581660,
-    5631164, 5763504, 5070128, 5173778, 4510136, 4601546, 6024616, 1035000, 4672206,
-    3980730, 5684142, 4668148, 4595938, 5752334, 1565838, 3652610, 5573566, 397068] 
-    downloader = UdemyAssetDownloader(
-        base_folder=BASE,
-        auth_file=AUTH_FILE,
-        EXCLUDED_COURSE_IDS=EXCLUDED_COURSE_IDS
-    )
-    downloader.run()
+    # Specify the course IDs you want to download
+    COURSE_IDS_TO_DOWNLOAD = [123456, 789012, 345678]  # <-- Replace with your actual course IDs
+
+    downloader = UdemyAssetDownloader(base_folder=BASE, auth_file=AUTH_FILE)
+    for course_id in COURSE_IDS_TO_DOWNLOAD:
+        course_name = downloader.get_course_name(course_id)
+        print(f"Processing course: {course_name} ({course_id})")
+        assets = downloader._enumerate_supplementary_assets(course_id, course_name)
+        results = downloader.download_assets(course_name, assets)
+        print(f"Downloaded {sum(1 for r in results if r.get('local_path'))} assets for {course_name}")

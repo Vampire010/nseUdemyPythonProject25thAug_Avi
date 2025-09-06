@@ -1,8 +1,16 @@
 {
   "ExpandedNodes": [
     "",
-    "\\nseIndiaFinal"
+    "\\UdemyFinal",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\01_Importing Financial Markets Data\\11_Import multiple stocks",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\20_Create interactive data apps\\110_Create a market dashboard application with streamlit",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\21_Creating a candlestick pattern web screener\\111_Setup package and flask web server",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\07_Programming SQL\\64_Variables - Part 1",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\Binary Trading Volume Spread Analysis (VSA)\\01_Introduction of VSA",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\The Advanced SQL Server Masterclass For Data Analysis",
+    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions"
   ],
-  "SelectedNode": "\\nseIndiaFinal\\getOptionChainFetcher.py",
+  "SelectedNode": "\\UdemyFinal\\Future_step3_videoDownloader.py",
   "PreviewInSolutionExplorer": false
 }
