@@ -5,6 +5,7 @@ import json
 import os
 from openpyxl import Workbook
 from getCookiesFromNSEIndia import NSECookieManager
+from concurrent.futures import ThreadPoolExecutor
 
 
 class NseTestDataExporter:
@@ -14,7 +15,6 @@ class NseTestDataExporter:
         try:
             cm = NSECookieManager()
             self.cookies = cm.fetch_and_save_cookies()
-            
         except Exception as e:
             print(f"[ERROR] Failed to fetch cookies: {e}")
             self.cookies = {}
@@ -105,32 +105,34 @@ class NseTestDataExporter:
 
         return indices_list
 
+    def fetch_gainers_for_index(self, market_index, index_info):
+        index_name = list(index_info.values())[0]
+        url = self.gainers_url_template.format(
+            market_index=market_index.replace(" ", "%20"),
+            indices=index_name.replace(" ", "%20")
+        )
+        try:
+            self.session.headers.update(self.headers_gainers_url)
+            response = self.session.get(url, timeout=10)
+            print(f"Requesting gainers for: {index_name} ({market_index}) - Status: {response.status_code}")
+            response.raise_for_status()
+            gainers_data = response.json()
+            if isinstance(gainers_data, list):
+                return [{**index_info, **row, "MarketIndex": market_index} for row in gainers_data]
+        except requests.exceptions.RequestException as e:
+            print(f"[ERROR] Request failed for {index_name}: {e}")
+        except json.JSONDecodeError as e:
+            print(f"[ERROR] JSON decode failed for {index_name}: {e}")
+        return []
+
     def fetch_gainers_for_indices(self, market_index, indices_list):
         all_data = []
-        for index_info in indices_list:
-            index_name = list(index_info.values())[0]
-            url = self.gainers_url_template.format(
-                market_index=market_index.replace(" ", "%20"),
-                indices=index_name.replace(" ", "%20")
-            )
-            try:
-                self.session.headers.update(self.headers_gainers_url)
-                response = self.session.get(url, timeout=10)
-                print(f"Requesting gainers for: {index_name} ({market_index}) - Status: {response.status_code}")
-                response.raise_for_status()
-                gainers_data = response.json()
-            except requests.exceptions.RequestException as e:
-                print(f"[ERROR] Request failed for {index_name}: {e}")
-                continue
-            except json.JSONDecodeError as e:
-                print(f"[ERROR] JSON decode failed for {index_name}: {e}")
-                continue
-
-            if isinstance(gainers_data, list):
-                for row in gainers_data:
-                    all_data.append({**index_info, **row, "MarketIndex": market_index})
-
-            time.sleep(2)  # polite delay
+        with ThreadPoolExecutor() as executor:
+            futures = [executor.submit(self.fetch_gainers_for_index, market_index, index_info) for index_info in indices_list]
+            for future in futures:
+                result = future.result()
+                if result:
+                    all_data.extend(result)
         return all_data
 
     def export_to_excel(self, broad_indices_dict, gainers_dict, filename="nse_Broad_SectoralIndices_combined_data.xlsx"):
@@ -150,8 +152,10 @@ class NseTestDataExporter:
         except Exception as e:
             print(f"[ERROR] Failed to export Excel: {e}")
 
-
     def run(self):
+        start_time = time.time()  # Start time
+        print(f"Execution started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
+        
         broad_indices_dict = {}
         gainers_dict = {}
         for market_index in self.marketIndices:
@@ -159,6 +163,10 @@ class NseTestDataExporter:
             broad_indices_dict[market_index] = broad_indices
             gainers_dict[market_index] = self.fetch_gainers_for_indices(market_index, broad_indices)
         self.export_to_excel(broad_indices_dict, gainers_dict)
+        
+        end_time = time.time()  # End time
+        print(f"Execution ended at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
+        print(f"Total execution time: {end_time - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

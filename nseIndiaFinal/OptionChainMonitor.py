@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime
 from openpyxl import load_workbook
+from openpyxl.styles import PatternFill
 from getCookiesFromNSEIndia import NSECookieManager
 from getoption_chain_contract_info import OptionChainContractInfoFetcher
 
@@ -23,9 +24,6 @@ class OptionChainMonitor:
         self.prev_df = None        # Store previous data snapshot
 
         # Setup cookies
-        cm = NSECookieManager()
-        self.cookies = cm.fetch_and_save_cookies()
-
         cookie_file = "nseIndiaCookies_name_value.json"
         if os.path.exists(cookie_file):
             with open(cookie_file, "r") as f:
@@ -123,13 +121,27 @@ class OptionChainMonitor:
                 # Append as a new sheet (guaranteed unique name)
                 with pd.ExcelWriter(self.output_file, engine="openpyxl", mode="a", if_sheet_exists="new") as writer:
                     df.to_excel(writer, sheet_name=timestamp, index=False)
-                print(f"📑 Added new sheet: {timestamp}")
+
+                # Load the workbook to apply formatting
+                workbook = load_workbook(self.output_file)
+                sheet = workbook[timestamp]
+
+                # Apply green highlight to changed cells
+                if self.prev_df is not None:
+                    fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
+                    for row_idx, row in df.iterrows():
+                        for col_idx, value in enumerate(row):
+                            prev_value = self.prev_df.iloc[row_idx, col_idx] if row_idx < len(self.prev_df) else None
+                            if value != prev_value:
+                                cell = sheet.cell(row=row_idx + 2, column=col_idx + 1)  # +2 for header and 1-based index
+                                cell.fill = fill
+
+                # Save the workbook with formatting
+                workbook.save(self.output_file)
+                print(f"📑 Added new sheet with formatting: {timestamp}")
 
         except Exception as e:
             print(f"❌ Error saving Excel: {e}")
-
-
-
 
     def run_monitor(self):
         print(f"🚀 Monitoring Option Chain for {self.symbol} expiry {self.expiry} every {self.interval}s...")

@@ -116,6 +116,6 @@ class UdemyCaptionFetcher:
 
 if __name__ == "__main__":
     # Example usage
-    COURSE_IDS_TO_PROCESS = [123456, 789012, 345678]  # <-- Replace with your actual course IDs
+    COURSE_IDS_TO_PROCESS = [3464482, 4069268, 2186622]  # <-- Replace with your actual course IDs
     fetcher = UdemyCaptionFetcher()
     fetcher.fetch_captions_for_courses(COURSE_IDS_TO_PROCESS)

@@ -215,7 +215,7 @@ if __name__ == "__main__":
     BASE = "./udemyDownloads"
     AUTH_FILE = "Authentication.json"
     # Specify the course IDs you want to download
-    COURSE_IDS_TO_DOWNLOAD = [123456, 789012, 345678]  # <-- Replace with your actual course IDs
+    COURSE_IDS_TO_DOWNLOAD = [3464482, 4069268, 2186622]  # <-- Replace with your actual course IDs
 
     downloader = UdemyAssetDownloader(base_folder=BASE, auth_file=AUTH_FILE)
     for course_id in COURSE_IDS_TO_DOWNLOAD:

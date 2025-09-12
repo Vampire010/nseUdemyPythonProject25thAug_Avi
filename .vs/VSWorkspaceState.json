@@ -1,16 +1,17 @@
 {
   "ExpandedNodes": [
     "",
-    "\\UdemyFinal",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\01_Importing Financial Markets Data\\11_Import multiple stocks",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\20_Create interactive data apps\\110_Create a market dashboard application with streamlit",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\Python for Financial Markets Analysis\\21_Creating a candlestick pattern web screener\\111_Setup package and flask web server",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\07_Programming SQL\\64_Variables - Part 1",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\Binary Trading Volume Spread Analysis (VSA)\\01_Introduction of VSA",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\The Advanced SQL Server Masterclass For Data Analysis",
-    "\\UdemyFinal\\ExcludeCourseID\\udemyDownloads\\notebook\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions"
+    "\\nseIndiaFinal",
+    "\\nseIndiaFinal\\exportedData",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\04_Working With Portfolio",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\04_Working With Portfolio\\10_Calculating Profit and Loss",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\13_Adding Notification and Navigation System",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\13_Adding Notification and Navigation System\\35_Adding Navigation System - Menu Bar",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions\\07_Introducing Window Functions With OVER"
   ],
-  "SelectedNode": "\\UdemyFinal\\Future_step3_videoDownloader.py",
+  "SelectedNode": "\\nseIndiaFinal\\getMarketSnapshot.py",
   "PreviewInSolutionExplorer": false
 }

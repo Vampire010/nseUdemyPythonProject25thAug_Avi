@@ -1,4 +1,5 @@
-COURSE_IDS_TO_PROCESS = [123456, 789012, 345678]  # <-- Edit this list as needed
+COURSE_IDS_TO_PROCESS = [3464482, 4069268, 2186622]  # <-- Edit this list as needed
+
 
 import os
 import re
@@ -391,6 +392,17 @@ class UdemyCourseNotebookBuilder:
                 export_notebook_to_pdf(nb_path, pdf_path, self.css_path)
                 created += 1
         return created
+
+# --------- MISSING FUNCTION DEFINITION ADDED BELOW ---------
+def merge_api_rows_with_local(base_folder, course_name, api_rows):
+    """
+    Stub for merging API asset rows with local files.
+    Returns api_rows unchanged.
+    Extend this function to scan local files in base_folder/course_name
+    and attach them to api_rows where appropriate.
+    """
+    # TODO: Implement actual merging logic here!
+    return api_rows
 
 def main():
     parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks from assets (API plan and/or downloads scan) with transcriptions.")
