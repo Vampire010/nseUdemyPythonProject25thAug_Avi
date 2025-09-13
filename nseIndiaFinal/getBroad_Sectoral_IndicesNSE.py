@@ -3,7 +3,7 @@ import pandas as pd
 import time
 import json
 import os
-from openpyxl import Workbook
+from openpyxl.styles import PatternFill
 from getCookiesFromNSEIndia import NSECookieManager
 from concurrent.futures import ThreadPoolExecutor
 
@@ -138,22 +138,71 @@ class NseTestDataExporter:
     def export_to_excel(self, broad_indices_dict, gainers_dict, filename="nse_Broad_SectoralIndices_combined_data.xlsx"):
         try:
             export_dir = r"./exportedData"
-            os.makedirs(export_dir, exist_ok=True)  # create folder if it doesn't exist
+            os.makedirs(export_dir, exist_ok=True)
             file_path = os.path.join(export_dir, filename)
 
-            with pd.ExcelWriter(file_path) as writer:
+            with pd.ExcelWriter(file_path, engine='openpyxl') as writer:
+                # Write all data first
                 for market_index in self.marketIndices:
-                    pd.DataFrame(broad_indices_dict.get(market_index, [])).to_excel(
-                        writer, sheet_name=f"{market_index}_Broad"[:31], index=False)
-                    pd.DataFrame(gainers_dict.get(market_index, [])).to_excel(
-                        writer, sheet_name=f"{market_index}_Gainers"[:31], index=False)
+                    broad_df = pd.DataFrame(broad_indices_dict.get(market_index, []))
+                    broad_df.to_excel(writer, sheet_name=f"{market_index}_Broad"[:31], index=False)
+
+                    gainers_df = pd.DataFrame(gainers_dict.get(market_index, []))
+                    gainers_df.to_excel(writer, sheet_name=f"{market_index}_Gainers"[:31], index=False)
+
+                # Now apply formatting to ALL sheets
+                workbook = writer.book
+                for sheet_name in workbook.sheetnames:
+                    sheet = workbook[sheet_name]
+
+                    # Get header row
+                    header_cells = [cell.value for cell in sheet[1]]
+                    if not header_cells:
+                        continue
+
+                    # Find pChange column
+                    pchange_col_idx = None
+                    for idx, h in enumerate(header_cells):
+                        if h and str(h).strip().lower() == "pchange":
+                            pchange_col_idx = idx + 1
+                            break
+
+                    if not pchange_col_idx:
+                        continue  # skip sheets without pChange
+
+                    # Loop rows
+                    for row_idx in range(2, sheet.max_row + 1):
+                        cell = sheet.cell(row=row_idx, column=pchange_col_idx)
+                        raw_val = cell.value
+                        if raw_val is None:
+                            continue
+
+                        if isinstance(raw_val, str):
+                            val_str = raw_val.replace("%", "").replace(",", "").strip()
+                        else:
+                            val_str = raw_val
+
+                        try:
+                            pChange_val = float(val_str)
+                        except (TypeError, ValueError):
+                            continue
+
+                        fill_color = None
+                        if pChange_val < 0:
+                            fill_color = PatternFill(start_color="FF0000", end_color="FF0000", fill_type="solid")
+                        elif pChange_val > 0:
+                            fill_color = PatternFill(start_color="00FF00", end_color="00FF00", fill_type="solid")
+
+                        if fill_color:
+                            for col_idx in range(1, sheet.max_column + 1):
+                                sheet.cell(row=row_idx, column=col_idx).fill = fill_color
 
             print(f"[SUCCESS] Exported all responses to {file_path}")
         except Exception as e:
             print(f"[ERROR] Failed to export Excel: {e}")
 
     def run(self):
-        start_time = time.time()  # Start time
+        start_time = time.time()
         print(f"Execution started at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(start_time))}")
         
         broad_indices_dict = {}
@@ -164,7 +213,7 @@ class NseTestDataExporter:
             gainers_dict[market_index] = self.fetch_gainers_for_indices(market_index, broad_indices)
         self.export_to_excel(broad_indices_dict, gainers_dict)
         
-        end_time = time.time()  # End time
+        end_time = time.time()
         print(f"Execution ended at: {time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(end_time))}")
         print(f"Total execution time: {end_time - start_time:.2f} seconds")
 

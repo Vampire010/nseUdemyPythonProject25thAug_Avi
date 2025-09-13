@@ -1,7 +1,9 @@
-﻿import requests
+﻿import os
+import requests
 import pandas as pd
 import json
-import os
+import time
+from concurrent.futures import ThreadPoolExecutor
 from getCookiesFromNSEIndia import NSECookieManager
 
 
@@ -10,6 +12,10 @@ class CorporateAnnouncementsFetcher:
         # Fixed export folder
         self.export_dir = r"./exportedData"
         os.makedirs(self.export_dir, exist_ok=True)
+
+        # Directory for downloaded documents
+        self.documents_dir = r"./exportedData/nse_announcements/DocumentsToAnalyze"
+        os.makedirs(self.documents_dir, exist_ok=True)
 
         # Step 1: Get cookies safely
         try:
@@ -79,9 +85,11 @@ class CorporateAnnouncementsFetcher:
         }
 
     def fetch_data(self):
+        start_time = time.time()
         try:
             response = requests.get(self.url, headers=self.headers, timeout=10)
             response.raise_for_status()
+            print(f"✅ Data fetched in {time.time() - start_time:.2f} seconds")
             return response.json()
         except requests.exceptions.RequestException as e:
             print(f"❌ Error fetching data: {e}")
@@ -90,6 +98,7 @@ class CorporateAnnouncementsFetcher:
         return None
 
     def save_to_excel(self, data):
+        start_time = time.time()
         if not data:
             print("⚠ No data to save.")
             return
@@ -104,14 +113,65 @@ class CorporateAnnouncementsFetcher:
                 return
 
             df.to_excel(self.output_file, index=False)
-            print(f"✅ Data saved to {self.output_file}")
+            print(f"✅ Data saved to {self.output_file} in {time.time() - start_time:.2f} seconds")
         except Exception as e:
             print(f"❌ Error saving data: {e}")
 
+    def download_document(self, file_url):
+        try:
+            file_name = os.path.basename(file_url)
+            file_path = os.path.join(self.documents_dir, file_name)
+
+            # Check if the file already exists
+            if os.path.exists(file_path):
+                print(f"⚠ File already exists, skipping: {file_name}")
+                return
+
+            # Download the file
+            response = requests.get(file_url, headers=self.headers, stream=True)
+            response.raise_for_status()
+
+            with open(file_path, "wb") as f:
+                for chunk in response.iter_content(chunk_size=8192):
+                    f.write(chunk)
+
+            print(f"✅ Downloaded: {file_name}")
+        except Exception as e:
+            print(f"❌ Error downloading {file_url}: {e}")
+
+    def download_documents(self, data):
+        start_time = time.time()
+        if not data:
+            print("⚠ No data to process for document download.")
+            return
+
+        try:
+            # If data is a list, iterate directly
+            if isinstance(data, list):
+                items = data
+            elif isinstance(data, dict) and "data" in data:
+                items = data["data"]
+            else:
+                print("⚠ Unexpected data format for document download.")
+                return
+
+            # Extract URLs containing "attchmntFile"
+            file_urls = [item["attchmntFile"] for item in items if "attchmntFile" in item]
+
+            # Download files concurrently
+            with ThreadPoolExecutor() as executor:
+                executor.map(self.download_document, file_urls)
+
+            print(f"✅ All documents downloaded in {time.time() - start_time:.2f} seconds")
+        except Exception as e:
+            print(f"❌ Error downloading documents: {e}")
 
     def run(self):
+        start_time = time.time()
         data = self.fetch_data()
         self.save_to_excel(data)
+        self.download_documents(data)
+        print(f"✅ Total execution time: {time.time() - start_time:.2f} seconds")
 
 
 if __name__ == "__main__":

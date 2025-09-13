@@ -2,16 +2,8 @@
   "ExpandedNodes": [
     "",
     "\\nseIndiaFinal",
-    "\\nseIndiaFinal\\exportedData",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\04_Working With Portfolio",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\04_Working With Portfolio\\10_Calculating Profit and Loss",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\13_Adding Notification and Navigation System",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Python GUI Programming Using Tkinter and SQLite3\\13_Adding Notification and Navigation System\\35_Adding Navigation System - Menu Bar",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\The Advanced SQL Server Masterclass For Data Analysis\\02_Advanced Analysis With Window Functions\\07_Introducing Window Functions With OVER"
+    "\\nseIndiaFinal\\exportedData"
   ],
-  "SelectedNode": "\\nseIndiaFinal\\getMarketSnapshot.py",
+  "SelectedNode": "\\nseIndiaFinal\\exportedData\\nse_Broad_SectoralIndices_combined_data.xlsx",
   "PreviewInSolutionExplorer": false
 }
