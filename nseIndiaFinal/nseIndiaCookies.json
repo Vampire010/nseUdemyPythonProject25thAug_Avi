@@ -1,37 +1,37 @@
 [
     {
         "domain": ".nseindia.com",
-        "expiry": 1789300106,
+        "expiry": 1790319549,
         "httpOnly": false,
         "name": "_abck",
         "path": "/",
         "sameSite": "Lax",
         "secure": true,
-        "value": "1BDADC7A1ACC22EEFEB3271D571D9477~-1~YAAQhNcLF3tzBfuYAQAA/7nnQg5WE3RtkljTJMfwK7lNAImgRT83h2uyRALNCOEE9gyNZu1a8c84KGE8BHZWYZGcUvDh/+SWMQvhHQo8fnJw4tm4yqPW/M7Z0E5BhyICzxJzecteO992Qr+AjoLMFg7EP1bqNf27IFLQNPVJBmHL/fwBzKXrVuVYXp4olFnp/16sNLDZYDOhV3YlTBC06kpy55TTV5s6es1gNB7sH5YY34qBb58aTI5G6md7MwnzxwQ6S0yzV3zmrZNxrQj0/aFF92kt49n0LmYzU1XvUjCjtHCarMigpnyK+SFQut6VMiy4KrMX75vueF0iKK3b9MG419rm5Pa/LXNStY4VpBXo1tVVJzbygiYcgurtcg6SNvskTyonMKz+F441mq7GNYdaGpag55CTZrJPGzx5JbsYQFGMitaQaq7gdHCLVn/bI9K5zor2q8+MSmOPYIsXpPqV8Wt43+eLHnu7IzrkG8REOoBkphr0b00t1g6ePfo5BNlxx4ZHUwQZAnrc30r+Q9eE3GKxvyh2k/QdTB42lHncxLrZGyOqavQjlx+cNAyvm/PqV50gT54YHQcAnO0QfII3XS1T+gE1~-1~-1~-1~AAQAAAAE%2f%2f%2f%2f%2f8AXRWj6TbJkJYkYViMwzENnkePKe%2fsbjZu1x0qglgZsiOit5oIAjzPBMbldMwwwMFhlISzUZZ3lv4dMvoOQ6sdm+fqwKSfl1+s4~-1"
+        "value": "51A019CB89438B195F6AC1843C6A979D~-1~YAAQjdcLF0AOqmuZAQAAAjSrfw5UYlVeFWIwwy0VfEP9iOGLO8LrCb5MXzp7UUCyhfImjv/0vkiLdtRDW+uvvsP/mNSdb9mrXdtQ6jtvcWlhMujZazPyoiVRBCsgGKlNV4o7qHQtcdRKoDmAFphRubel/wC78Oh7H1se0rN6hwAPWNx+/XUMyaq7F1J99L58FqFEEuDhvMd5QCC34RxueQ469e1dDwE5nD4FAgh7BnJBGJ5U1GmsIHoldPBnBd+EfQ4iNRmwzfbVYsx+2MKP6wfPL8+syP32FCKZ9vrA3+yGWV5xSpudT8RDm/SPfn2qCPvNojgCGl5YB+UVkNMrGGj/h6xHmGWTL86Oz1TTLqPx+0iZEQhwc+x81wPCVZtz68UcY+50KUpbpvObo4Tt1yipxAqcLmHQ+UAVOkk3gATIhGynYeflDqJuTvu9XX2/bCpzJIOUMg64wLBWcQJSVU3b9NXU7yzFIqsQT18P8UoRa+yLvsQpx4vH6MWX5B7FWDZxXG98aLaadraX1gC5lSA13Y4NNQ3y4fWFgz0EiNKmwV1Dg3aU7VRVUER+qoODmCWKNNrmpZaFDO1Hox4HnG38~-1~-1~-1~AAQAAAAE%2f%2f%2f%2f%2f7B2YJ1V9CGKMo98UjEWYXh8P1ZMjP9jt4pLXWystsfDRowbXg6Tdf3wCwJoCMPG0NF6llIFJ8EuTPAVVntVmQts5cw1wFkn4oDp~-1"
     },
     {
         "domain": "www.nseindia.com",
-        "expiry": 1757771309,
+        "expiry": 1758790748,
         "httpOnly": true,
         "name": "nsit",
         "path": "/",
         "sameSite": "Strict",
         "secure": true,
-        "value": "5VRgy3gh82R4KcLegcntaIPY"
+        "value": "W6qt2dzaKxkpGNVFsT8jaG7z"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1792324105,
+        "expiry": 1793343548,
         "httpOnly": false,
         "name": "_ga_87M7PJ3R97",
         "path": "/",
         "sameSite": "Lax",
         "secure": false,
-        "value": "GS2.1.s1757764105$o1$g0$t1757764105$j60$l0$h0"
+        "value": "GS2.1.s1758783548$o1$g0$t1758783548$j60$l0$h0"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1757767704,
+        "expiry": 1758787147,
         "httpOnly": true,
         "name": "AKA_A2",
         "path": "/",
@@ -41,62 +41,62 @@
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1757778504,
+        "expiry": 1758797947,
         "httpOnly": false,
         "name": "bm_sz",
         "path": "/",
         "sameSite": "Lax",
         "secure": false,
-        "value": "70E53E1BF2CF63A77D360A860C28C532~YAAQhNcLF1ZuBfuYAQAAQ7PnQh0aAz5dB74/HTbS/0sweBWpQqjIMPWjd03Dw2zK7Zm6Ug8cPmb5m/slrPKLXAC9et02esRFWM6Vvag65lj3QcR0/y2cz601qLGPRqTQ15QCm1tNvKXPrys88KcRQ+xlqSDClzJn7UiDa/+d75rxCNU4jVRCMLwAR3CV9TBAel8ntjkJGoGnPxnnVwTOEfsrgEBch2u1Kj2O/lt6OqRUXx+sujzhHZPrRv2v+I5G9r5W5TThfcg5ZITgRlEpPXZ3v+fHS7B7c0QF3NoKpmAujctfl/dsfy3NCmA7uTobYo2r7YynWhxky88wgxprSIm2Z9dhy9AAE+FOXQwRpMZUsl7AdROMOBmXMf8cyIzBmW+F/eO+vNB9u/Xl~3621958~4600881"
+        "value": "AAD771CF7AA698E0053E26C18B7B739A~YAAQjdcLF0kKqmuZAQAADC2rfx3byuojLGto9ZMETsujf9ZYbCiPmiSW4hVvb7TGG6pEq2G2pDkY3Sq++LA83nbhmrT3kNbGxSVLnZj5MY40QxYhNMJjz9lLBTrOt8CczGfAbkKIPiPLmFOKgPsY0gybHWsLDvVHYIyNLqy9Hr4NWzd1x/PaEnRnzRYXgG22HVEYO+q0tUAdZ3jxyjMaa3kiQrAr132DFX+9GZq26rv2xfE1aoULkxpdr9XrCfCpHhS7FGun6H89VksXu2DCojuPhfRIt+Rk9B+Ao+Lh0Dpr+7iI0kcUNObSyetb35KvEVx1kOUhwskAUN98oDp1I/NIM99qD+F5ajYbJPMvgrj+vbQoiHovps5nGKvEAGyvpnL0/PBZjZ+eyW5J+dg=~4470598~4408900"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1757771304,
+        "expiry": 1758790747,
         "httpOnly": false,
         "name": "bm_mi",
         "path": "/",
         "sameSite": "Lax",
         "secure": true,
-        "value": "191764B6203E5E14A366340DE5197A97~YAAQhNcLF457BfuYAQAA8cPnQh1vYW5RUByUYiKoJB+zP9ig2WyiXEKOTbi2NsebgEVYYu2s7joaGMZz0/4+7fBP1DnEnkPK44Z56y2DS0rH7XI+cumt8e0PQHek+He8rrkyKkq4LJlHJxaGZ4uXMkHDRPzC4y5jWIQAgvPHYOHtcbuU3LvBOd3YBtRcYilQRnhvFtd/lPnvuhSh98hTUMM8zEOm2atkJgBZUrvnLJV5Y6ItlMKi2l3Da+bkGG7wRFnz+hjSOHCiSl+xUOsZ4zKSLplBS3oCvL7n7ARAsIhL/WSPeyZFKo/8w8kj6x/5QONFS5BhAxJnTe2ZxEj1aCgn~1"
+        "value": "685A95486E2132A052FE968E37BDF9F0~YAAQjdcLFx8NqmuZAQAA0TGrfx3cFSB602gSveKbQmqksYwVwYzZMkHIIOjV3lBG1/Oo7S8fLq2tAyzMv73p6c1MG4S6ks6Rb5WLA6kzbbv6u+p0mJcddMcLoGNLK0xs1yZF/S3ShATnj2OItw5fkSA8Z9oI0Lyv7AOiW+x1uquMJ60Oe2AFM4YHhSozexJMAQkiwMeQZkEfZokimF761w2lSVCk+GIybySrUVwxJ5wB+jrmafYt+fsyMafQsSjzWzRKo+9P30ivlUVOqiGPyXanOZOLjDjtlKx9swkas7mQY2A3zncFhFhOq8N0XUelhHQbqHIi1txZYEMamYRddA==~1"
     },
     {
         "domain": "www.nseindia.com",
-        "expiry": 1757771309,
+        "expiry": 1758790748,
         "httpOnly": true,
         "name": "nseappid",
         "path": "/",
         "sameSite": "Strict",
         "secure": true,
-        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGkubnNlIiwiYXVkIjoiYXBpLm5zZSIsImlhdCI6MTc1Nzc2NDEwOSwiZXhwIjoxNzU3NzcxMzA5fQ.vVMmCSTrSzSYiOHZ8_Uzm9O5eS2xDZP4Qlv1XEWic10"
+        "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhcGkubnNlIiwiYXVkIjoiYXBpLm5zZSIsImlhdCI6MTc1ODc4MzU0OSwiZXhwIjoxNzU4NzkwNzQ5fQ.GKhUp581rzJWLww2OGRHLHnUsrRyq9qCdTilt-WYq8A"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1792324105,
+        "expiry": 1793343548,
         "httpOnly": false,
         "name": "_ga",
         "path": "/",
         "sameSite": "Lax",
         "secure": false,
-        "value": "GA1.1.1632491439.1757764106"
+        "value": "GA1.1.40329147.1758783549"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1757771306,
+        "expiry": 1758790748,
         "httpOnly": false,
         "name": "bm_sv",
         "path": "/",
         "sameSite": "Lax",
         "secure": true,
-        "value": "DA35F541B15E0B198DE56BDDAFDE5525~YAAQhNcLF497BfuYAQAA8cPnQh1f1dB8SlcJuHFhUb1GYHe2fIcDy2SxLMMVcPF5Ck0lAmnnI+AQzuMza2CJiWP27MKSVre9w2Tlk6H/hpV9SnPqy5OkHho4wad5DAnL3zLJqdevj19N5l+DWJcL5RCoSabYcIPazKkUxXkPfFSXHsOPWG6WppIF5cC01sn05703w5QMFblQkUxXGjI1NhPtW7ZIFKMo5oJrFii7LyH80LbR5lGcUF9FMIgSdn5tp8E=~1"
+        "value": "030E2D3EB6A67ED519F3FB6CE57DE5D0~YAAQjdcLFyANqmuZAQAA0jGrfx2QhKNgEGayrbcasUKjWhqvyPl9gMON0tOql/eRUMktG10WL0Xk8kcoa7WSzS2gCGHjrsLNu48OTYgtRZHti1Xjhw2yMFqE1Tna04138NXWKFKYiGN2814HmVdMxzGE4eTUpowPRuhaDnrapAp0day64U5dMt0e+kdCMcFqdr4cXdhZQYyAC139gkC2I8xk/wgrsSw7bzTFTPBTFziym6PPYqRQMrSjojK3NUWgaB0=~1"
     },
     {
         "domain": ".nseindia.com",
-        "expiry": 1757771304,
+        "expiry": 1758790747,
         "httpOnly": false,
         "name": "ak_bmsc",
         "path": "/",
         "sameSite": "Lax",
         "secure": false,
-        "value": "1C5DF34B796FF9D9859D1AC8202F84E6~000000000000000000000000000000~YAAQhNcLFzdwBfuYAQAA5LXnQh34DLdW84RsdAaqR/H5ILPShJnS7hOD4rCgXKvda4RolB3pbClslMrtOZy/WadzzB7fnb/akdGFQhzSej49zIPcijFenyBSAtq4T/gowtnkc4MNsTBtGpZcQTqHBKr/0sCjWVOOQDyOyCUK+X2xIw9EdZwH0SEK4TwRI2syUQ+sgG+/h6nqSUW5+K0w4yc6waPt0FdRvDgCE2J1gYJ692L2sHXJ1Mx0lHeTDhFkdubsQMSIfyx4OU7535ReRjUylSbyB/MN82ZAE6KeeCIeX9+HDFiO2n/kvcCKiu3ZBucU0dz4hna1gPJuJUJHMt6P0QlELC0I7FjjQVefEB5/sr/IGVTVKRa98UrFYCd3+tD4Bcbnc+zL5qVpX5IhX1QaWHujMhL1p8XmOR1GcLctCOFmml4TlgRq7ZZ298UQWWtl"
+        "value": "1096927E114060CFF5442936E33385F9~000000000000000000000000000000~YAAQjdcLF4kLqmuZAQAASy+rfx0i2VyzpRMAEByj47dNdK24a3NN9NEGtl4ZZ5szu2+eZ91/mG0eGwZ1Sp7YX0sHdgxuvzuEL4IbamLqoThzpLUUFkVWKTopdC57ePEuwJtIlJrHy6Oqslx65UmZJyhVhHAS8wBflHSVvN0GxPGjba9njKewEgr40Y4rX7sjmU6OAau2ywAlTapF6J0+GQipGfR/WURc503/iO2HwwqwcWLhpVk4ZBbBxCXSO0VzNSXRBvSWuVtZpZEM2TZyvmBm6BvxERV97/KZy7gJ3Xnn/rkBQaqJp0oB3rAbUP6Z+2Cm+1C/kyHlO3veIRaLoPRe1cJpdwjzZjSQiW3IevJg1KxJJC8zLrABX6kBa5gDYdvKV40Zixb6SCkB0D6cARDG+/yzOJUUHDmiwDjcqXjPHl4QCikT10zEDajCS36+7rJFuQ=="
     }
 ]

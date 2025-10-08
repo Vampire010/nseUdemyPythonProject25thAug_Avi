@@ -1,0 +1,23 @@
+2025-10-06 11:53:31,830 ERROR    No course IDs provided. Use --courses followed by one or more IDs.
+2025-10-06 11:54:42,819 INFO     Loaded authentication data
+2025-10-06 11:54:42,820 INFO     Initialized HTTP session with retries
+2025-10-06 11:54:42,826 INFO     Processing course ID: 1144906
+2025-10-06 11:54:42,827 INFO     Building asset list for course 1144906 ...
+2025-10-06 11:54:50,550 INFO     Planned 27 total rows; 12 assets identified for download
+2025-10-06 11:54:50,551 INFO     Downloading 27 assets for course 'Web Scraping In Python: Master The Fundamentals' with 12 workers
+2025-10-06 11:54:50,745 INFO     Downloaded: C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\downloads\Web Scraping In Python_ Master The Fundamentals\02_Static Data Extraction_Web Scraping\12_Exercise Intro_ Combining Data Sources\original.pdf (29 KB)
+2025-10-06 11:54:50,745 INFO     Downloaded: C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\downloads\Web Scraping In Python_ Master The Fundamentals\03_Scraping Websites That Load Data With Javascript\23_Exercise Intro_ Continuously Saving Our Data\original.pdf (23 KB)
+2025-10-06 11:54:50,745 INFO     Downloaded: C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\downloads\Web Scraping In Python_ Master The Fundamentals\02_Static Data Extraction_Web Scraping\08_Exercise Intro_ Expand the Data Extraction\original.pdf (23 KB)
+2025-10-06 11:54:50,746 INFO     Downloaded: C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\downloads\Web Scraping In Python_ Master The Fundamentals\02_Static Data Extraction_Web Scraping\10_Exercise Intro_ Wikipedia Entry Scrap\original.pdf (25 KB)
+2025-10-06 11:54:51,127 INFO     Exported report to C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\udemy_assets_report.xlsx and C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\udemy_assets_report.csv
+2025-10-06 11:54:51,130 INFO     Summary: Total rows=27, Files saved=4, Errors=8
+2025-10-06 11:55:33,639 ERROR    No course IDs provided. Use --courses followed by IDs.
+2025-10-06 11:55:38,460 INFO     Loaded authentication data
+2025-10-06 11:55:38,461 INFO     Initialized HTTP session with retries
+2025-10-06 11:55:38,461 INFO     Processing course ID: 1144906
+2025-10-06 11:55:38,461 INFO     Building asset list for course 1144906 ...
+2025-10-06 11:55:46,695 INFO     Planned 27 total rows; 12 assets identified for download
+2025-10-06 11:55:46,695 INFO     Downloading 27 assets for 'Web Scraping In Python: Master The Fundamentals' with 12 workers
+2025-10-06 11:55:46,996 INFO     Exported report to C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\udemy_assets_report.xlsx and C:\Users\giris\OneDrive\Documents\GitHub\nseUdemyPythonProject25thAug_Avi\UdemySpecficCourseBuilding\udemyDownloads\udemy_assets_report.csv
+2025-10-06 11:55:46,998 INFO     Summary: Total=27, Files Saved=4, Errors=8
+2025-10-06 12:06:36,424 ERROR    No course IDs provided. Use --courses followed by IDs.

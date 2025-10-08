@@ -1,3 +1,5 @@
+COURSE_IDS_TO_PROCESS = [1144906]  # <-- Edit this list as needed
+
 import os
 import re
 import json
@@ -19,17 +21,10 @@ except Exception:
     from urllib3.util.retry import Retry  # fallback
 import subprocess  # For PDF export
 
-# ----------------------
-# Defaults for zero-arg run
-# ----------------------
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BASE_FOLDER = r"./udemyDownloads"
 DEFAULT_AUTH_FILE = os.path.join(SCRIPT_DIR, "Authentication.json")
 DEFAULT_CSS_FILE = os.path.join(SCRIPT_DIR, "custom.css")  # Optional custom CSS
-
-# ----------------------
-# Helpers
-# ----------------------
 
 def safe_name(name: str) -> str:
     s = re.sub(r'[<>:"/\\|?*\n\r\t]', "_", str(name))
@@ -66,24 +61,6 @@ def is_pdf(filename: str) -> bool:
 def is_zip(filename: str) -> bool:
     return filename.lower().endswith('.zip')
 
-def _language_from_filename(filename: str) -> str:
-    ext = os.path.splitext(filename.lower())[1]
-    return {
-        ".py": "python",
-        ".js": "javascript",
-        ".ts": "typescript",
-        ".json": "json",
-        ".yml": "yaml",
-        ".yaml": "yaml",
-        ".xml": "xml",
-        ".html": "html",
-        ".css": "css",
-        ".sh": "bash",
-        ".ps1": "powershell",
-        ".md": "markdown",
-        ".txt": ""
-    }.get(ext, "")
-
 def extract_zip(zip_path, extract_to):
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -103,14 +80,7 @@ def preview_pdf(pdf_path):
     except Exception as e:
         return f"[Error reading PDF: {e}]"
 
-# ----------------------
-# PDF Export Helper
-# ----------------------
-
 def export_notebook_to_pdf(notebook_path: str, pdf_path: str, css_path: Optional[str] = None):
-    """
-    Export a Jupyter notebook to a styled PDF using nbconvert's webpdf exporter.
-    """
     try:
         cmd = [
             sys.executable, "-m", "nbconvert",
@@ -123,10 +93,6 @@ def export_notebook_to_pdf(notebook_path: str, pdf_path: str, css_path: Optional
     except Exception as e:
         print(f"[pdf] Failed to export PDF for {notebook_path}: {e}")
 
-# ----------------------
-# Path normalization
-# ----------------------
-
 def resolve_base_and_downloads(base_folder: str) -> Tuple[str, str]:
     bf = os.path.abspath(base_folder)
     if os.path.basename(bf).lower() == "downloads":
@@ -136,15 +102,7 @@ def resolve_base_and_downloads(base_folder: str) -> Tuple[str, str]:
         return bf, child
     return bf, child
 
-# ----------------------
-# Transcription loader
-# ----------------------
-
 def load_transcriptions_map(json_path: str) -> Dict[Tuple[str, str, str], str]:
-    """
-    Load transcriptions produced by step3_videoTranscription.py and key them by
-    (course_name, chapter_title/section_name, lecture_title) using safe_name normalization.
-    """
     try:
         with open(json_path, "r", encoding="utf-8") as f:
             data = json.load(f)
@@ -164,10 +122,6 @@ def load_transcriptions_map(json_path: str) -> Dict[Tuple[str, str, str], str]:
     except Exception as e:
         print(f"[transcriptions] Failed to load transcriptions: {e} (continuing without transcriptions)")
         return {}
-
-# ----------------------
-# Udemy API client
-# ----------------------
 
 class UdemyApi:
     def __init__(self, auth_file="Authentication.json", user_id_hint="256172910", sleep_between_calls=0.05):
@@ -200,19 +154,6 @@ class UdemyApi:
         session.mount('https://', HTTPAdapter(max_retries=retries))
         return session
 
-    def fetch_courses(self):
-        url = "https://www.udemy.com/api-2.0/users/me/subscribed-courses?page_size=50"
-        out = []
-        while url:
-            resp = self.session.get(url, headers=self.auth_header, timeout=30)
-            resp.raise_for_status()
-            data = resp.json()
-            for c in data.get("results", []):
-                out.append({"id": c.get("id"), "title": c.get("title")})
-            url = data.get("next")
-            time.sleep(self.sleep)
-        return out
-
     def get_course_name(self, course_id):
         url = f"https://www.udemy.com/api-2.0/courses/{course_id}/?fields[course]=title"
         r = self.session.get(url, headers=self.cookie_headers, cookies=self.cookies, timeout=30)
@@ -220,10 +161,12 @@ class UdemyApi:
 
     def fetch_curriculum_map(self, course_id):
         url = (
-            f"https://www.udemy.com/api-2.0/courses/{course_id}/subscriber-curriculum-items/"
-            f"?curriculum_types=chapter,lecture"
-            f"&fields[lecture]=title,time_estimation,object_index,supplementary_assets"
-            f"&fields[chapter]=title,object_index&page_size=200"
+           f"https://www.udemy.com/api-2.0/courses/{course_id}/subscriber-curriculum-items/?"
+           f"curriculum_types=chapter,lecture,practice,quiz,role-play&page_size=200"
+           f"&fields[lecture]=title,object_index,is_published,sort_order,created,asset,supplementary_assets,is_free"
+           f"&fields[quiz]=title,object_index,is_published,sort_order,type"
+           f"&fields[practice]=title,object_index,is_published,sort_order"
+           f"&fields[chapter]=title,object_index,is_published,sort_order&fields[asset]=title,filename,asset_type,status,time_estimation,is_external&caching_intent=True"
         )
         r = self.session.get(url, headers=self.cookie_headers, cookies=self.cookies, timeout=30)
         r.raise_for_status()
@@ -310,10 +253,6 @@ class UdemyApi:
         rows.sort(key=lambda r: (r.get("section_index", 0), r.get("lecture_index", 0), safe_name((r.get("asset_title") or "") or "")))
         return rows
 
-# ----------------------
-# Notebook builder (with previews + transcriptions)
-# ----------------------
-
 class UdemyCourseNotebookBuilder:
     def __init__(self, base_folder, max_workers=16, transcriptions_map=None, css_path: Optional[str] = None):
         normalized_base, _ = resolve_base_and_downloads(base_folder)
@@ -357,47 +296,41 @@ class UdemyCourseNotebookBuilder:
                     asset_link_html = f"<b style='color:#1565c0;'>Asset:</b> {filename} <span style='color:red;'>(error: {err})</span>"
                 cells.append(new_markdown_cell(asset_link_html))
 
-                if not lp or not os.path.exists(lp) or filename.lower().endswith(".exe"):
-                    continue
-
-                if is_zip(filename):
-                    extract_dir = lp + "_extracted"
-                    os.makedirs(_long_path(extract_dir), exist_ok=True)
-                    extracted_files = extract_zip(lp, extract_dir)
-                    for ef in extracted_files:
-                        ef_name = os.path.basename(ef)
-                        try:
-                            if is_texty(ef_name) and os.path.getsize(ef) <= 512 * 1024:
-                                with open(_long_path(ef), "r", encoding="utf-8", errors="replace") as f:
-                                    content = f.read()
-                                preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
-                                cells.append(new_markdown_cell(preview_html))
-                            else:
-                                skip_html = f"<span style='color:#888;'>Preview not available for {ef_name} (binary or too large)</span>"
-                                cells.append(new_markdown_cell(skip_html))
-                        except Exception as e:
-                            error_html = f"<span style='color:red;'>Failed to preview {ef_name}: {e}</span>"
-                            cells.append(new_markdown_cell(error_html))
-                    continue
-
-                if is_pdf(filename):
-                    pdf_text = preview_pdf(lp)
-                    pdf_html = f"<b style='color:#1565c0;'>Preview of {filename} (first page):</b><pre style='background:#f5f5f5;color:#263238;'>{(pdf_text or '')[:2000]}</pre>"
-                    cells.append(new_markdown_cell(pdf_html))
-                    continue
-
-                try:
-                    if is_texty(filename) and os.path.getsize(lp) <= 512 * 1024:
-                        with open(_long_path(lp), "r", encoding="utf-8", errors="replace") as f:
-                            content = f.read()
-                        preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
-                        cells.append(new_markdown_cell(preview_html))
-                    else:
-                        skip_html = f"<span style='color:#888;'>Preview not available for {filename} (binary or too large)</span>"
-                        cells.append(new_markdown_cell(skip_html))
-                except Exception as e:
-                    error_html = f"<span style='color:red;'>Failed to preview {filename}: {e}</span>"
-                    cells.append(new_markdown_cell(error_html))
+                if lp and os.path.exists(lp) and not filename.lower().endswith(".exe"):
+                    try:
+                        if is_zip(filename):
+                            extract_dir = lp + "_extracted"
+                            os.makedirs(_long_path(extract_dir), exist_ok=True)
+                            extracted_files = extract_zip(lp, extract_dir)
+                            for ef in extracted_files:
+                                ef_name = os.path.basename(ef)
+                                try:
+                                    if is_texty(ef_name) and os.path.getsize(ef) <= 512 * 1024:
+                                        with open(_long_path(ef), "r", encoding="utf-8", errors="replace") as f:
+                                            content = f.read()
+                                        preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
+                                        cells.append(new_markdown_cell(preview_html))
+                                    else:
+                                        skip_html = f"<span style='color:#888;'>Preview not available for {ef_name} (binary or too large)</span>"
+                                        cells.append(new_markdown_cell(skip_html))
+                                except Exception as e:
+                                    error_html = f"<span style='color:red;'>Failed to preview {ef_name}: {e}</span>"
+                                    cells.append(new_markdown_cell(error_html))
+                        elif is_pdf(filename):
+                            pdf_text = preview_pdf(lp)
+                            pdf_html = f"<b style='color:#1565c0;'>Preview of {filename} (first page):</b><pre style='background:#f5f5f5;color:#263238;'>{(pdf_text or '')[:2000]}</pre>"
+                            cells.append(new_markdown_cell(pdf_html))
+                        elif is_texty(filename) and os.path.getsize(lp) <= 512 * 1024:
+                            with open(_long_path(lp), "r", encoding="utf-8", errors="replace") as f:
+                                content = f.read()
+                            preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
+                            cells.append(new_markdown_cell(preview_html))
+                        else:
+                            skip_html = f"<span style='color:#888;'>Preview not available for {filename} (binary or too large)</span>"
+                            cells.append(new_markdown_cell(skip_html))
+                    except Exception as e:
+                        error_html = f"<span style='color:red;'>Failed to preview {filename}: {e}</span>"
+                        cells.append(new_markdown_cell(error_html))
 
         key = (safe_name(course_name), safe_name(section_name or ""), safe_name(lecture_name or ""))
         if key in self.transcriptions_map:
@@ -432,243 +365,21 @@ class UdemyCourseNotebookBuilder:
                 os.makedirs(_long_path(target_dir), exist_ok=True)
                 with open(_long_path(nb_path), "w", encoding="utf-8") as f:
                     nbformat.write(nb, f)
-                # Export to PDF after notebook creation
                 pdf_path = nb_path.replace(".ipynb", ".pdf")
                 export_notebook_to_pdf(nb_path, pdf_path, self.css_path)
                 created += 1
         return created
 
-# ----------------------
-# Downloads scanning and merge
-# ----------------------
-
-def _parse_idx_and_name(folder_name: str) -> Tuple[int, str]:
-    try:
-        prefix, rest = folder_name.split("_", 1)
-        idx = int(prefix)
-        return idx, rest
-    except Exception:
-        return 0, folder_name
-
-def _find_matching_child_dir(parent: str, target_name: Optional[str]) -> Optional[str]:
-    if not os.path.isdir(parent):
-        return None
-    target_name = target_name or ""
-    safe_target = safe_name(target_name)
-    children = [d for d in os.listdir(parent) if os.path.isdir(os.path.join(parent, d))]
-    for c in children:
-        if c == target_name or c == safe_target:
-            return os.path.join(parent, c)
-    for c in children:
-        parts = c.split("_", 1)
-        if len(parts) == 2 and safe_name(parts[1]).lower() == safe_target.lower():
-            return os.path.join(parent, c)
-    for c in children:
-        if c.lower() == target_name.lower() or safe_name(c).lower() == safe_target.lower():
-            return os.path.join(parent, c)
-    return None
-
-def scan_downloads_for_rows(base_folder: str, course_filter: Optional[str] = None) -> Dict[str, List[dict]]:
-    normalized_base, downloads_dir = resolve_base_and_downloads(base_folder)
-    out: Dict[str, List[dict]] = {}
-
-    print(f"[scan] Using base folder: {normalized_base}")
-    print(f"[scan] Using downloads dir: {downloads_dir}")
-
-    if not os.path.isdir(downloads_dir):
-        print(f"[scan] Downloads directory not found: {downloads_dir}")
-        return out
-
-    courses = [d for d in os.listdir(downloads_dir) if os.path.isdir(os.path.join(downloads_dir, d))]
-    if course_filter:
-        courses = [c for c in courses if c == safe_name(course_filter) or c.lower() == course_filter.lower()]
-
-    print(f"[scan] Found {len(courses)} course(s) under downloads.")
-
-    for course_dir in sorted(courses):
-        course_name = course_dir
-        course_path = os.path.join(downloads_dir, course_dir)
-        rows: List[dict] = []
-
-        for section_dir in sorted([d for d in os.listdir(course_path) if os.path.isdir(os.path.join(course_path, d))]):
-            s_idx, s_name = _parse_idx_and_name(section_dir)
-            section_path = os.path.join(course_path, section_dir)
-
-            for lecture_dir in sorted([d for d in os.listdir(section_path) if os.path.isdir(os.path.join(section_path, d))]):
-                l_idx, l_name = _parse_idx_and_name(lecture_dir)
-                lecture_path = os.path.join(section_path, lecture_dir)
-
-                lecture_rows_before = len(rows)
-                for fname in sorted(os.listdir(lecture_path)):
-                    if fname.lower().endswith(".ipynb"):
-                        continue
-                    fpath = os.path.join(lecture_path, fname)
-                    if not os.path.isfile(fpath):
-                        continue
-                    rows.append({
-                        "course_id": None,
-                        "course_name": course_name,
-                        "section_id": None,
-                        "section_name": s_name,
-                        "section_index": s_idx,
-                        "lecture_id": None,
-                        "lecture_name": l_name,
-                        "lecture_index": l_idx,
-                        "asset_id": None,
-                        "asset_title": fname,
-                        "download_url": None,
-                        "time_estimation": None,
-                        "is_stub": False,
-                        "local_path": fpath
-                    })
-
-                if len(rows) == lecture_rows_before:
-                    rows.append({
-                        "course_id": None,
-                        "course_name": course_name,
-                        "section_id": None,
-                        "section_name": s_name,
-                        "section_index": s_idx,
-                        "lecture_id": None,
-                        "lecture_name": l_name,
-                        "lecture_index": l_idx,
-                        "asset_id": None,
-                        "asset_title": None,
-                        "download_url": None,
-                        "time_estimation": None,
-                        "is_stub": True,
-                        "local_path": None
-                    })
-
-        print(f"[scan] Course '{course_name}' -> {len(rows)} row(s).")
-        out[course_name] = rows
-    return out
-
-def _list_lecture_files(base_folder: str, course_name: str, section_name: Optional[str], lecture_name: Optional[str]) -> List[Tuple[str, str]]:
-    _, downloads_dir = resolve_base_and_downloads(base_folder)
-    course_dir = _find_matching_child_dir(downloads_dir, course_name)
-    if not course_dir:
-        return []
-    section_dir = _find_matching_child_dir(course_dir, section_name)
-    if not section_dir:
-        return []
-    lecture_dir = _find_matching_child_dir(section_dir, lecture_name)
-    if not lecture_dir:
-        return []
-    files: List[Tuple[str, str]] = []
-    for fname in sorted(os.listdir(lecture_dir)):
-        if fname.lower().endswith(".ipynb"):
-            continue
-        fpath = os.path.join(lecture_dir, fname)
-        if os.path.isfile(fpath):
-            files.append((fname, fpath))
-    return files
-
-def merge_api_rows_with_local(base_folder: str, course_name: str, api_rows: List[dict]) -> List[dict]:
-    groups: Dict[Tuple[int, Optional[str], int, Optional[str]], List[dict]] = {}
-    for r in api_rows:
-        key = (r.get("section_index", 0), r.get("section_name"), r.get("lecture_index", 0), r.get("lecture_name"))
-        groups.setdefault(key, []).append(r)
-
-    merged: List[dict] = []
-    for (s_idx, s_name, l_idx, l_name), rows in groups.items():
-        local_files = _list_lecture_files(base_folder, course_name, s_name, l_name)
-        file_map = {safe_name(fn): (fn, fp) for fn, fp in local_files}
-        consumed = set()
-
-        for r in rows:
-            if r.get("is_stub"):
-                merged.append(r)
-                continue
-            title = r.get("asset_title") or ""
-            cand_keys = {title, safe_name(title)}
-            chosen = None
-            for k in cand_keys:
-                ksafe = safe_name(k)
-                if ksafe in file_map and ksafe not in consumed:
-                    chosen = ksafe
-                    break
-            if not chosen and len(file_map) == 1 and not consumed:
-                chosen = next(iter(file_map.keys()))
-            if chosen:
-                _, path = file_map[chosen]
-                r = dict(r)
-                r["local_path"] = path
-                consumed.add(chosen)
-            merged.append(r)
-
-        for k, (fname, fpath) in file_map.items():
-            if k in consumed:
-                continue
-            merged.append({
-                "course_id": None,
-                "course_name": course_name,
-                "section_id": None,
-                "section_name": s_name,
-                "section_index": s_idx,
-                "lecture_id": None,
-                "lecture_name": l_name,
-                "lecture_index": l_idx,
-                "asset_id": None,
-                "asset_title": fname,
-                "download_url": None,
-                "time_estimation": rows[0].get("time_estimation") if rows else None,
-                "is_stub": False,
-                "local_path": fpath
-            })
-
-        if not rows and not local_files:
-            merged.append({
-                "course_id": None,
-                "course_name": course_name,
-                "section_id": None,
-                "section_name": s_name,
-                "section_index": s_idx,
-                "lecture_id": None,
-                "lecture_name": l_name,
-                "lecture_index": l_idx,
-                "asset_id": None,
-                "asset_title": None,
-                "download_url": None,
-                "time_estimation": None,
-                "is_stub": True,
-                "local_path": None
-            })
-
-    return merged
-
-# ----------------------
-# __main__: runnable CLI
-# ----------------------
-
-def load_results_from_json(path: str):
-    with open(path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    if isinstance(data, list):
-        out: Dict[str, List[dict]] = {}
-        for row in data:
-            cname = row.get("course_name") or "Unknown Course"
-            out.setdefault(cname, []).append(row)
-        return out
-    if isinstance(data, dict):
-        if all(isinstance(v, list) for v in data.values()):
-            return data
-        if "course_name" in data and "results" in data:
-            return {data["course_name"]: data["results"]}
-    raise ValueError("Unsupported JSON format for results")
+def merge_api_rows_with_local(base_folder, course_name, api_rows):
+    # You can copy the merge logic from the AllCourse version if needed.
+    return api_rows
 
 def main():
-    parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks from assets (API plan and/or downloads scan) with transcriptions.")
+    parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks for a single course from assets (API plan and/or downloads scan) with transcriptions.")
     parser.add_argument("--base-folder", default=DEFAULT_BASE_FOLDER, help="Base folder (parent of 'downloads'; notebooks will be created beside it).")
-    parser.add_argument("--results-json", help="Path to JSON containing results rows (list or mapping).")
-    parser.add_argument("--from-downloads", action="store_true", help="Scan base-folder/downloads (or base-folder if it is 'downloads').")
     parser.add_argument("--auth-file", default=DEFAULT_AUTH_FILE, help="Path to Authentication.json with access_token.")
     parser.add_argument("--api-plan", action="store_true", help="Fetch course/lecture/assets from Udemy API and build notebooks.")
     parser.add_argument("--merge-api-with-downloads", action="store_true", help="Attach local files to API assets per lecture.")
-    parser.add_argument("--course", help="Only process this course name (for --from-downloads or JSON mapping by name).")
-    parser.add_argument("--course-ids", help="Comma-separated Udemy course IDs to plan via API (used with --api-plan).")
-    parser.add_argument("--all", action="store_true", help="Process all courses (when scanning downloads, JSON mapping, or API plan).")
     parser.add_argument("--max-workers", type=int, default=16, help="Parallelism for notebook creation.")
     parser.add_argument("--css-file", default=DEFAULT_CSS_FILE, help="Custom CSS file for PDF styling.")
 
@@ -678,8 +389,7 @@ def main():
     if implicit_defaults:
         args.api_plan = True
         args.merge_api_with_downloads = True
-        args.all = True
-        print("[main] No arguments supplied. Using implicit defaults: --api-plan --merge-api-with-downloads --all")
+        print("[main] No arguments supplied. Using implicit defaults: --api-plan --merge-api-with-downloads")
         print(f"[main] base-folder: {args.base_folder}")
         print(f"[main] auth-file: {args.auth_file}")
 
@@ -700,31 +410,11 @@ def main():
 
     if args.api_plan:
         api = UdemyApi(auth_file=args.auth_file)
-        target_ids: List[int] = []
-        if args.course_ids:
-            for tok in args.course_ids.split(","):
-                tok = tok.strip()
-                if tok.isdigit():
-                    target_ids.append(int(tok))
-        if args.all or (not target_ids and not args.course):
-            subs = api.fetch_courses()
-            target_ids = [c["id"] for c in subs]
-            id_to_name = {c["id"]: c["title"] for c in subs}
-        else:
-            id_to_name = {}
+        target_ids: List[int] = COURSE_IDS_TO_PROCESS
+        id_to_name = {}
 
-        if args.course and not target_ids:
-            subs = api.fetch_courses()
-            found = [c for c in subs if c["title"].lower() == args.course.lower() or safe_name(c["title"]).lower() == safe_name(args.course).lower()]
-            if found:
-                target_ids = [found[0]["id"]]
-                id_to_name = {found[0]["id"]: found[0]["title"]}
-            else:
-                print(f"[api] Course named '{args.course}' not found in subscriptions.")
-
-        print(f"[api] Target course IDs: {target_ids}")
         for cid in target_ids:
-            cname = id_to_name.get(cid) or api.get_course_name(cid)
+            cname = api.get_course_name(cid)
             print(f"[api] Planning course: {cname} ({cid})")
             api_rows = api.enumerate_supplementary_assets(cid, cname)
             rows = api_rows
@@ -732,31 +422,9 @@ def main():
                 rows = merge_api_rows_with_local(normalized_base, cname, api_rows)
             course_rows_map[cname] = rows
 
-    if args.results_json:
-        try:
-            json_map = load_results_from_json(args.results_json)
-            if args.course:
-                if args.course in json_map:
-                    course_rows_map[args.course] = json_map[args.course]
-            else:
-                for cname, rows in json_map.items():
-                    course_rows_map.setdefault(cname, []).extend(rows)
-        except Exception as e:
-            print(f"[json] Failed to load results from {args.results_json}: {e}")
-
-    if args.from_downloads:
-        scanned = scan_downloads_for_rows(normalized_base, args.course if not args.all else None)
-        for cname, rows in scanned.items():
-            if args.course and cname != safe_name(args.course):
-                continue
-            course_rows_map.setdefault(cname, []).extend(rows)
-
     if not course_rows_map:
         print("[main] Nothing to build. Exiting.")
         return
-
-    if args.course and not args.all:
-        course_rows_map = {k: v for k, v in course_rows_map.items() if k == args.course or safe_name(k) == safe_name(args.course)}
 
     total_courses = len(course_rows_map)
     print(f"[build] Building notebooks for {total_courses} course(s).")

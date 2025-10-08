@@ -1,9 +1,17 @@
 {
   "ExpandedNodes": [
     "",
-    "\\nseIndiaFinal",
-    "\\nseIndiaFinal\\exportedData"
+    "\\UdemyAllCourseBuilding\\udemyDownloads",
+    "\\UdemyAllCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals",
+    "\\UdemyAllCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals\\02_Static Data Extraction_Web Scraping",
+    "\\UdemyAllCourseBuilding\\udemyDownloads\\notebooks",
+    "\\UdemyAllCourseBuilding\\udemyDownloads\\scene_frames",
+    "\\UdemySpecficCourseBuilding",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals\\03_Scraping Websites That Load Data With Javascript"
   ],
-  "SelectedNode": "\\nseIndiaFinal\\exportedData\\nse_Broad_SectoralIndices_combined_data.xlsx",
+  "SelectedNode": "\\UdemySpecficCourseBuilding\\step2_udemyCaptionsWithUrlExcludeCourseID.py",
   "PreviewInSolutionExplorer": false
 }

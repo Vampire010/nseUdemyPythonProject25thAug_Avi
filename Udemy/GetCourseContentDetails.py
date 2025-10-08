@@ -74,7 +74,6 @@ class UdemyCourseOutline:
 
 if __name__ == "__main__":
     BASE_FOLDER = r"./udemyDownloads"
-    COURSE_ID = 397068  # replace with your Udemy course ID
 
-    udemy_outline = UdemyCourseOutline(base_folder=BASE_FOLDER, course_id=COURSE_ID)
+    udemy_outline = UdemyCourseOutline(base_folder=BASE_FOLDER)
     udemy_outline.run()

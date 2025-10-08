@@ -66,7 +66,7 @@ class VideoTranscriptionFetcher:
 if __name__ == "__main__":
     excel_path = r"./udemyDownloads/udemyCaptionsWithUrl.xlsx"
     # Specify the course IDs you want to process
-    COURSE_IDS_TO_PROCESS = [3464482, 4069268, 2186622]  # <-- Replace with your actual course IDs
+    COURSE_IDS_TO_PROCESS = [2942646]  # <-- Replace with your actual course IDs
 
     fetcher = VideoTranscriptionFetcher(excel_path, COURSE_IDS_TO_PROCESS=COURSE_IDS_TO_PROCESS)
     fetcher.run()

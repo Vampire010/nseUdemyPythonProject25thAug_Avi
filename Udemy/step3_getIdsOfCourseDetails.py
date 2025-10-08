@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 from openpyxl import load_workbook
 
-
+# File
 class UdemySupplementaryFetcher:
     def __init__(self, input_file, output_file, sheet_name, auth_file, base_folder):
         self.input_file = input_file
@@ -79,7 +79,7 @@ class UdemySupplementaryFetcher:
         return lecture_map
 
     def fetch_assets(self, course_ids):
-        """Fetch supplementary assets of type 'File' with full metadata."""
+        """Fetch supplementary assets of any non-empty type with full metadata."""
         all_data = []
 
         for course_id in course_ids:
@@ -107,7 +107,8 @@ class UdemySupplementaryFetcher:
                     lecture_info = lecture_map.get(lecture_id, {})
 
                     for asset in lecture.get("supplementary_assets", []):
-                        if asset.get("asset_type") == "File":
+                        asset_type = asset.get("asset_type")
+                        if asset_type and isinstance(asset_type, str) and asset_type.strip():
                             all_data.append({
                                 "course_id": course_id,
                                 "course_name": course_name,
@@ -130,7 +131,7 @@ class UdemySupplementaryFetcher:
             df.to_excel(self.output_file, index=False)
             print(f"✅ Exported to {self.output_file}")
         else:
-            print("⚠️ No supplementary assets of type 'File' found.")
+            print("⚠️ No supplementary assets of valid type found.")
 
     def run(self):
         """Main execution flow."""

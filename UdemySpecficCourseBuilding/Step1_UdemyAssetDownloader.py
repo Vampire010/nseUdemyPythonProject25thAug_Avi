@@ -1,4 +1,4 @@
-import os
+﻿import os
 import json
 import time
 import logging
@@ -8,8 +8,10 @@ from tqdm import tqdm
 
 from helpers import safe_name, get_filename_from_url
 
+
 class UdemyAssetDownloader:
-    def __init__(self, base_folder, auth_file="Authentication.json", user_id_hint="256172910", sleep_between_calls=0.05, max_workers=16):
+    def __init__(self, base_folder, auth_file="Authentication.json", user_id_hint="256172910",
+                 sleep_between_calls=0.05, max_workers=16):
         self.base_folder = os.path.abspath(base_folder)
         self.auth_file = auth_file
         self.user_id_hint = user_id_hint
@@ -32,7 +34,10 @@ class UdemyAssetDownloader:
             raise ValueError("Missing 'access_token' in Authentication.json")
 
     def _init_headers(self):
-        self.auth_header = {"Authorization": f"Bearer {self.ACCESS_TOKEN}", "Accept": "application/json"}
+        self.auth_header = {
+            "Authorization": f"Bearer {self.ACCESS_TOKEN}",
+            "Accept": "application/json"
+        }
         self.cookie_headers = {
             "accept": "application/json",
             "x-requested-with": "XMLHttpRequest",
@@ -43,7 +48,11 @@ class UdemyAssetDownloader:
     def _init_session(self):
         session = requests.Session()
         from requests.adapters import HTTPAdapter, Retry
-        retries = Retry(total=5, backoff_factor=0.5, status_forcelist=[429, 500, 502, 503, 504])
+        retries = Retry(
+            total=5,
+            backoff_factor=0.5,
+            status_forcelist=[429, 500, 502, 503, 504]
+        )
         session.mount('https://', HTTPAdapter(max_retries=retries))
         return session
 
@@ -91,10 +100,19 @@ class UdemyAssetDownloader:
             rr = self.session.get(url, headers=self.cookie_headers, cookies=self.cookies, timeout=30)
             rr.raise_for_status()
             data = rr.json()
-            if "download_urls" in data and "File" in data["download_urls"]:
-                return data["download_urls"]["File"][0]["file"], data.get("time_estimation")
+            file_url = None
+            # Handle both File and SourceCode keys in download_urls
+            if "download_urls" in data:
+                if "File" in data["download_urls"]:
+                    file_url = data["download_urls"]["File"][0]["file"]
+                elif "SourceCode" in data["download_urls"]:
+                    file_url = data["download_urls"]["SourceCode"][0]["file"]
             elif "asset" in data and "download_urls" in data["asset"]:
-                return data["asset"]["download_urls"]["File"][0]["file"], data["asset"].get("time_estimation")
+                if "File" in data["asset"]["download_urls"]:
+                    file_url = data["asset"]["download_urls"]["File"][0]["file"]
+                elif "SourceCode" in data["asset"]["download_urls"]:
+                    file_url = data["asset"]["download_urls"]["SourceCode"][0]["file"]
+            return file_url, data.get("time_estimation")
         except Exception as e:
             print(f"Failed fetching asset URL: {e}")
         return None, None
@@ -103,9 +121,20 @@ class UdemyAssetDownloader:
         print(f"Building asset list for course {course_name} ({course_id})...")
         _, lecture_map = self.fetch_curriculum_map(course_id)
         rows = []
+        valid_count, skipped_count = 0, 0
+
         for lecture_id, lec in lecture_map.items():
             supp = lec.get("supplementary_assets") or []
-            if not supp:
+
+            # ✅ Filter valid asset types
+            valid_assets = [
+                a for a in supp
+                if a.get("asset_type") and str(a.get("asset_type")).strip().lower() not in ["", "null", "none", "void"]
+            ]
+            skipped_count += len(supp) - len(valid_assets)
+
+            # Create stub entry if no valid assets
+            if not valid_assets:
                 rows.append({
                     "course_id": course_id,
                     "course_name": course_name,
@@ -117,17 +146,20 @@ class UdemyAssetDownloader:
                     "lecture_index": lec.get("lecture_index", 0),
                     "asset_id": None,
                     "asset_title": None,
+                    "asset_type": None,
                     "download_url": None,
                     "time_estimation": lec.get("time_estimation"),
                     "is_stub": True
                 })
                 continue
 
-            for asset in supp:
+            for asset in valid_assets:
                 sup_id = asset.get("id")
                 asset_title = asset.get("title") or f"asset_{sup_id}"
+                asset_type = asset.get("asset_type")
                 url, time_est = self._resolve_asset_url(course_id, lecture_id, sup_id)
                 time.sleep(self.sleep)
+
                 rows.append({
                     "course_id": course_id,
                     "course_name": course_name,
@@ -139,12 +171,20 @@ class UdemyAssetDownloader:
                     "lecture_index": lec.get("lecture_index", 0),
                     "asset_id": sup_id,
                     "asset_title": asset_title,
+                    "asset_type": asset_type,
                     "download_url": url,
                     "time_estimation": time_est or lec.get("time_estimation"),
                     "is_stub": False
                 })
-        rows.sort(key=lambda r: (r.get("section_index", 0), r.get("lecture_index", 0), safe_name((r.get("asset_title") or "") or "")))
+                valid_count += 1
+
+        rows.sort(key=lambda r: (
+            r.get("section_index", 0),
+            r.get("lecture_index", 0),
+            safe_name((r.get("asset_title") or "") or "")
+        ))
         print(f"Planned {len(rows)} rows (including stubs) for {course_name}")
+        print(f"✔ Valid assets: {valid_count}, ❌ Skipped invalid: {skipped_count}")
         return rows
 
     def _target_folder_for(self, course, section_idx, section, lecture_idx, lecture):
@@ -190,7 +230,8 @@ class UdemyAssetDownloader:
                     total_size = int(resp.headers.get('content-length', 0))
                     desc = f"{section} | {lecture} | {filename} ({total_size/1024:.1f} KB)"
                     with open(filepath, "wb") as f, tqdm(
-                        total=total_size, unit='B', unit_scale=True, unit_divisor=1024, desc=desc, leave=False, position=1
+                        total=total_size, unit='B', unit_scale=True, unit_divisor=1024,
+                        desc=desc, leave=False, position=1
                     ) as pbar:
                         for chunk in resp.iter_content(65536):
                             if chunk:
@@ -207,20 +248,21 @@ class UdemyAssetDownloader:
 
         with ThreadPoolExecutor(max_workers=self.max_workers) as executor:
             futures = [executor.submit(download_one, a) for a in assets]
-            for future in tqdm(as_completed(futures), total=len(futures), desc=f"Downloading assets for {course_name}", position=0):
+            for future in tqdm(as_completed(futures), total=len(futures),
+                               desc=f"Downloading assets for {course_name}", position=0):
                 out.append(future.result())
         return out
+
 
 if __name__ == "__main__":
     BASE = "./udemyDownloads"
     AUTH_FILE = "Authentication.json"
-    # Specify the course IDs you want to download
-    COURSE_IDS_TO_DOWNLOAD = [3464482, 4069268, 2186622]  # <-- Replace with your actual course IDs
+    COURSE_IDS_TO_DOWNLOAD = [6282633]  # <-- Replace with your actual course IDs
 
     downloader = UdemyAssetDownloader(base_folder=BASE, auth_file=AUTH_FILE)
     for course_id in COURSE_IDS_TO_DOWNLOAD:
         course_name = downloader.get_course_name(course_id)
-        print(f"Processing course: {course_name} ({course_id})")
+        print(f"\nProcessing course: {course_name} ({course_id})")
         assets = downloader._enumerate_supplementary_assets(course_id, course_name)
         results = downloader.download_assets(course_name, assets)
-        print(f"Downloaded {sum(1 for r in results if r.get('local_path'))} assets for {course_name}")
+        print(f"✅ Downloaded {sum(1 for r in results if r.get('local_path'))} assets for {course_name}\n")

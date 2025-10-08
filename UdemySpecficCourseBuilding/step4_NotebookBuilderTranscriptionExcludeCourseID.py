@@ -1,6 +1,3 @@
-COURSE_IDS_TO_PROCESS = [3464482, 4069268, 2186622]  # <-- Edit this list as needed
-
-
 import os
 import re
 import json
@@ -21,6 +18,9 @@ try:
 except Exception:
     from urllib3.util.retry import Retry  # fallback
 import subprocess  # For PDF export
+import base64
+import pandas as pd
+from docx import Document
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BASE_FOLDER = r"./udemyDownloads"
@@ -54,7 +54,21 @@ def _long_path(path: str) -> str:
     return path
 
 def is_texty(filename: str) -> bool:
-    return not re.search(r"\.(png|jpg|jpeg|gif|bmp|exe|dll|pdf|mp4|avi|mkv|mov|pptx?|docx?|xlsx?)$", filename, re.I)
+    text_extensions = (
+        ".txt", ".csv", ".tsv", ".json", ".jsonl", ".xml", ".html", ".htm", ".md", ".yaml", ".yml", ".ini", ".cfg",
+        ".env", ".log", ".tex", ".rst", ".rmd", ".ipynb", ".epub",
+        ".py", ".js", ".ts", ".jsx", ".tsx", ".java", ".c", ".cpp", ".h", ".hpp", ".cs", ".go", ".rb", ".php", ".swift",
+        ".kt", ".sql", ".sh", ".bat", ".ps1", ".r", ".pl", ".scala", ".dart", ".vue", ".svelte", ".css", ".scss", ".less",
+        ".toml", "makefile", "dockerfile", ".graphql", ".graphqls", ".handlebars", ".mustache", ".jinja", ".jsp", ".asp", ".aspx"
+    )
+    fname = filename.lower()
+    return fname.endswith(text_extensions) or fname in ("makefile", "dockerfile")
+
+def is_image(filename: str) -> bool:
+    return filename.lower().endswith((".png", ".jpg", ".jpeg", ".gif", ".bmp"))
+
+def is_video(filename: str) -> bool:
+    return filename.lower().endswith((".mp4", ".avi", ".mkv", ".mov", ".webm"))
 
 def is_pdf(filename: str) -> bool:
     return filename.lower().endswith('.pdf')
@@ -62,23 +76,11 @@ def is_pdf(filename: str) -> bool:
 def is_zip(filename: str) -> bool:
     return filename.lower().endswith('.zip')
 
-def _language_from_filename(filename: str) -> str:
-    ext = os.path.splitext(filename.lower())[1]
-    return {
-        ".py": "python",
-        ".js": "javascript",
-        ".ts": "typescript",
-        ".json": "json",
-        ".yml": "yaml",
-        ".yaml": "yaml",
-        ".xml": "xml",
-        ".html": "html",
-        ".css": "css",
-        ".sh": "bash",
-        ".ps1": "powershell",
-        ".md": "markdown",
-        ".txt": ""
-    }.get(ext, "")
+def is_excel(filename: str) -> bool:
+    return filename.lower().endswith(('.xlsx', '.xls', '.ods'))
+
+def is_docx(filename: str) -> bool:
+    return filename.lower().endswith('.docx')
 
 def extract_zip(zip_path, extract_to):
     try:
@@ -180,10 +182,12 @@ class UdemyApi:
 
     def fetch_curriculum_map(self, course_id):
         url = (
-            f"https://www.udemy.com/api-2.0/courses/{course_id}/subscriber-curriculum-items/"
-            f"?curriculum_types=chapter,lecture"
-            f"&fields[lecture]=title,time_estimation,object_index,supplementary_assets"
-            f"&fields[chapter]=title,object_index&page_size=200"
+           f"https://www.udemy.com/api-2.0/courses/{course_id}/subscriber-curriculum-items/?"
+           f"curriculum_types=chapter,lecture,practice,quiz,role-play&page_size=200"
+           f"&fields[lecture]=title,object_index,is_published,sort_order,created,asset,supplementary_assets,is_free"
+           f"&fields[quiz]=title,object_index,is_published,sort_order,type"
+           f"&fields[practice]=title,object_index,is_published,sort_order"
+           f"&fields[chapter]=title,object_index,is_published,sort_order&fields[asset]=title,filename,asset_type,status,time_estimation,is_external&caching_intent=True"
         )
         r = self.session.get(url, headers=self.cookie_headers, cookies=self.cookies, timeout=30)
         r.raise_for_status()
@@ -270,11 +274,143 @@ class UdemyApi:
         rows.sort(key=lambda r: (r.get("section_index", 0), r.get("lecture_index", 0), safe_name((r.get("asset_title") or "") or "")))
         return rows
 
+def _parse_idx_and_name(folder_name: str) -> Tuple[int, str]:
+    try:
+        prefix, rest = folder_name.split("_", 1)
+        idx = int(prefix)
+        return idx, rest
+    except Exception:
+        return 0, folder_name
+
+def _find_matching_child_dir(parent: str, target_name: Optional[str]) -> Optional[str]:
+    if not os.path.isdir(parent):
+        return None
+    target_name = target_name or ""
+    safe_target = safe_name(target_name)
+    children = [d for d in os.listdir(parent) if os.path.isdir(os.path.join(parent, d))]
+    for c in children:
+        if c == target_name or c == safe_target:
+            return os.path.join(parent, c)
+    for c in children:
+        parts = c.split("_", 1)
+        if len(parts) == 2 and safe_name(parts[1]).lower() == safe_target.lower():
+            return os.path.join(parent, c)
+    for c in children:
+        if c.lower() == target_name.lower() or safe_name(c).lower() == safe_target.lower():
+            return os.path.join(parent, c)
+    return None
+
+def _list_lecture_files(base_folder: str, course_name: str, section_name: Optional[str], lecture_name: Optional[str]) -> List[Tuple[str, str]]:
+    _, downloads_dir = resolve_base_and_downloads(base_folder)
+    course_dir = _find_matching_child_dir(downloads_dir, course_name)
+    if not course_dir:
+        return []
+    section_dir = _find_matching_child_dir(course_dir, section_name)
+    if not section_dir:
+        return []
+    lecture_dir = _find_matching_child_dir(section_dir, lecture_name)
+    if not lecture_dir:
+        return []
+    files: List[Tuple[str, str]] = []
+    for fname in sorted(os.listdir(lecture_dir)):
+        if fname.lower().endswith(".ipynb"):
+            continue
+        fpath = os.path.join(lecture_dir, fname)
+        if os.path.isfile(fpath):
+            files.append((fname, fpath))
+    return files
+
+def merge_api_rows_with_local(base_folder: str, course_name: str, api_rows: List[dict]) -> List[dict]:
+    groups: Dict[Tuple[int, Optional[str], int, Optional[str]], List[dict]] = {}
+    for r in api_rows:
+        key = (r.get("section_index", 0), r.get("section_name"), r.get("lecture_index", 0), r.get("lecture_name"))
+        groups.setdefault(key, []).append(r)
+
+    merged: List[dict] = []
+    for (s_idx, s_name, l_idx, l_name), rows in groups.items():
+        local_files = _list_lecture_files(base_folder, course_name, s_name, l_name)
+        file_map = {safe_name(fn): (fn, fp) for fn, fp in local_files}
+        consumed = set()
+
+        for r in rows:
+            if r.get("is_stub"):
+                merged.append(r)
+                continue
+            title = r.get("asset_title") or ""
+            cand_keys = {title, safe_name(title)}
+            chosen = None
+            for k in cand_keys:
+                ksafe = safe_name(k)
+                if ksafe in file_map and ksafe not in consumed:
+                    chosen = ksafe
+                    break
+            if not chosen and len(file_map) == 1 and not consumed:
+                chosen = next(iter(file_map.keys()))
+            if chosen:
+                _, path = file_map[chosen]
+                r = dict(r)
+                r["local_path"] = path
+                consumed.add(chosen)
+            merged.append(r)
+
+        for k, (fname, fpath) in file_map.items():
+            if k in consumed:
+                continue
+            merged.append({
+                "course_id": None,
+                "course_name": course_name,
+                "section_id": None,
+                "section_name": s_name,
+                "section_index": s_idx,
+                "lecture_id": None,
+                "lecture_name": l_name,
+                "lecture_index": l_idx,
+                "asset_id": None,
+                "asset_title": fname,
+                "download_url": None,
+                "time_estimation": rows[0].get("time_estimation") if rows else None,
+                "is_stub": False,
+                "local_path": fpath
+            })
+
+        if not rows and not local_files:
+            merged.append({
+                "course_id": None,
+                "course_name": course_name,
+                "section_id": None,
+                "section_name": s_name,
+                "section_index": s_idx,
+                "lecture_id": None,
+                "lecture_name": l_name,
+                "lecture_index": l_idx,
+                "asset_id": None,
+                "asset_title": None,
+                "download_url": None,
+                "time_estimation": None,
+                "is_stub": True,
+                "local_path": None
+            })
+
+    return merged
+
+def _download_asset(url: str, save_path: str) -> bool:
+    try:
+        response = requests.get(url, stream=True, timeout=30)
+        response.raise_for_status()
+        with open(save_path, "wb") as f:
+            for chunk in response.iter_content(chunk_size=8192):
+                f.write(chunk)
+        print(f"[download] Asset downloaded: {save_path}")
+        return True
+    except Exception as e:
+        print(f"[download] Failed to download asset from {url}: {e}")
+        return False
+
 class UdemyCourseNotebookBuilder:
     def __init__(self, base_folder, max_workers=16, transcriptions_map=None, css_path: Optional[str] = None):
         normalized_base, _ = resolve_base_and_downloads(base_folder)
         self.base_folder = normalized_base
-        self.notebooks_dir = os.path.join(self.base_folder, "notebook")
+        self.notebooks_dir = os.path.join(self.base_folder, "notebooks")
         os.makedirs(_long_path(self.notebooks_dir), exist_ok=True)
         self.max_workers = max_workers
         self.transcriptions_map = transcriptions_map or {}
@@ -306,6 +442,7 @@ class UdemyCourseNotebookBuilder:
                 url = r.get("download_url")
                 lp = r.get("local_path")
 
+                # Add asset link cell
                 if url:
                     asset_link_html = f"<b style='color:#1565c0;'>Asset:</b> <a href='{url}' style='color:#0d47a1;'>{filename}</a>"
                 else:
@@ -313,47 +450,108 @@ class UdemyCourseNotebookBuilder:
                     asset_link_html = f"<b style='color:#1565c0;'>Asset:</b> {filename} <span style='color:red;'>(error: {err})</span>"
                 cells.append(new_markdown_cell(asset_link_html))
 
-                if not lp or not os.path.exists(lp) or filename.lower().endswith(".exe"):
-                    continue
+                # Handle missing assets: download if possible
+                if not lp and url:
+                    target_dir = os.path.join(self.base_folder, "downloads", safe_name(course_name), safe_name(section_name or ""), safe_name(lecture_name or ""))
+                    os.makedirs(_long_path(target_dir), exist_ok=True)
+                    lp = os.path.join(target_dir, filename)
+                    if _download_asset(url, lp):
+                        r["local_path"] = lp
 
-                if is_zip(filename):
-                    extract_dir = lp + "_extracted"
-                    os.makedirs(_long_path(extract_dir), exist_ok=True)
-                    extracted_files = extract_zip(lp, extract_dir)
-                    for ef in extracted_files:
-                        ef_name = os.path.basename(ef)
-                        try:
-                            if is_texty(ef_name) and os.path.getsize(ef) <= 512 * 1024:
-                                with open(_long_path(ef), "r", encoding="utf-8", errors="replace") as f:
-                                    content = f.read()
-                                preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
+                # Append content based on file type
+                if lp and os.path.exists(lp):
+                    try:
+                        if is_zip(filename):
+                            extract_dir = lp + "_extracted"
+                            os.makedirs(_long_path(extract_dir), exist_ok=True)
+                            extracted_files = extract_zip(lp, extract_dir)
+                            for ef in extracted_files:
+                                ef_name = os.path.basename(ef)
+                                try:
+                                    if is_texty(ef_name) and os.path.getsize(ef) <= 512 * 1024:
+                                        with open(_long_path(ef), "r", encoding="utf-8", errors="replace") as f:
+                                            content = f.read()
+                                        preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
+                                        cells.append(new_markdown_cell(preview_html))
+                                    elif is_image(ef_name):
+                                        with open(ef, "rb") as img_file:
+                                            encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+                                        img_html = f"<img src='data:image/png;base64,{encoded_string}' alt='{ef_name}' style='max-width:100%;'>"
+                                        cells.append(new_markdown_cell(img_html))
+                                    elif is_video(ef_name):
+                                        video_html = f"<video controls style='max-width:100%;'><source src='{ef}' type='video/mp4'>Your browser does not support the video tag.</video>"
+                                        cells.append(new_markdown_cell(video_html))
+                                    elif is_excel(ef_name):
+                                        try:
+                                            df = pd.read_excel(ef)
+                                            preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{df.head(10).to_string()}</pre>"
+                                            cells.append(new_markdown_cell(preview_html))
+                                        except Exception as e:
+                                            error_html = f"<span style='color:red;'>Failed to preview Excel: {e}</span>"
+                                            cells.append(new_markdown_cell(error_html))
+                                    elif ef_name.lower().endswith('.docx'):
+                                        try:
+                                            doc = Document(ef)
+                                            text = "\n".join([p.text for p in doc.paragraphs])
+                                            preview_html = f"<b style='color:#1565c0;'>Preview: {ef_name}</b><pre style='background:#f5f5f5;color:#263238;'>{text[:2000]}</pre>"
+                                            cells.append(new_markdown_cell(preview_html))
+                                        except Exception as e:
+                                            error_html = f"<span style='color:red;'>Failed to preview DOCX: {e}</span>"
+                                            cells.append(new_markdown_cell(error_html))
+                                    else:
+                                        skip_html = f"<span style='color:#888;'>Preview not available for {ef_name} (binary or too large)</span>"
+                                        cells.append(new_markdown_cell(skip_html))
+                                except Exception as e:
+                                    error_html = f"<span style='color:red;'>Failed to preview {ef_name}: {e}</span>"
+                                    cells.append(new_markdown_cell(error_html))
+                        elif is_pdf(filename):
+                            pdf_text = preview_pdf(lp)
+                            pdf_html = f"<b style='color:#1565c0;'>Preview of {filename} (first page):</b><pre style='background:#f5f5f5;color:#263238;'>{(pdf_text or '')[:2000]}</pre>"
+                            cells.append(new_markdown_cell(pdf_html))
+                        elif filename.lower().endswith(('.csv', '.tsv')):
+                            try:
+                                df = pd.read_csv(lp, sep=None, engine='python')
+                                preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{df.head(10).to_string()}</pre>"
                                 cells.append(new_markdown_cell(preview_html))
-                            else:
-                                skip_html = f"<span style='color:#888;'>Preview not available for {ef_name} (binary or too large)</span>"
-                                cells.append(new_markdown_cell(skip_html))
-                        except Exception as e:
-                            error_html = f"<span style='color:red;'>Failed to preview {ef_name}: {e}</span>"
-                            cells.append(new_markdown_cell(error_html))
-                    continue
-
-                if is_pdf(filename):
-                    pdf_text = preview_pdf(lp)
-                    pdf_html = f"<b style='color:#1565c0;'>Preview of {filename} (first page):</b><pre style='background:#f5f5f5;color:#263238;'>{(pdf_text or '')[:2000]}</pre>"
-                    cells.append(new_markdown_cell(pdf_html))
-                    continue
-
-                try:
-                    if is_texty(filename) and os.path.getsize(lp) <= 512 * 1024:
-                        with open(_long_path(lp), "r", encoding="utf-8", errors="replace") as f:
-                            content = f.read()
-                        preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
-                        cells.append(new_markdown_cell(preview_html))
-                    else:
-                        skip_html = f"<span style='color:#888;'>Preview not available for {filename} (binary or too large)</span>"
-                        cells.append(new_markdown_cell(skip_html))
-                except Exception as e:
-                    error_html = f"<span style='color:red;'>Failed to preview {filename}: {e}</span>"
-                    cells.append(new_markdown_cell(error_html))
+                            except Exception as e:
+                                error_html = f"<span style='color:red;'>Failed to preview CSV/TSV: {e}</span>"
+                                cells.append(new_markdown_cell(error_html))
+                        elif is_excel(filename):
+                            try:
+                                df = pd.read_excel(lp)
+                                preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{df.head(10).to_string()}</pre>"
+                                cells.append(new_markdown_cell(preview_html))
+                            except Exception as e:
+                                error_html = f"<span style='color:red;'>Failed to preview Excel: {e}</span>"
+                                cells.append(new_markdown_cell(error_html))
+                        elif is_docx(filename):
+                            try:
+                                doc = Document(lp)
+                                text = "\n".join([p.text for p in doc.paragraphs])
+                                preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{text[:2000]}</pre>"
+                                cells.append(new_markdown_cell(preview_html))
+                            except Exception as e:
+                                error_html = f"<span style='color:red;'>Failed to preview DOCX: {e}</span>"
+                                cells.append(new_markdown_cell(error_html))
+                        elif is_texty(filename) and os.path.getsize(lp) <= 512 * 1024:
+                            with open(_long_path(lp), "r", encoding="utf-8", errors="replace") as f:
+                                content = f.read()
+                            preview_html = f"<b style='color:#1565c0;'>Preview: {filename}</b><pre style='background:#f5f5f5;color:#263238;'>{content[:2000]}</pre>"
+                            cells.append(new_markdown_cell(preview_html))
+                        elif is_image(filename):
+                            with open(lp, "rb") as img_file:
+                                encoded_string = base64.b64encode(img_file.read()).decode('utf-8')
+                            img_html = f"<img src='data:image/png;base64,{encoded_string}' alt='{filename}' style='max-width:100%;'>"
+                            cells.append(new_markdown_cell(img_html))
+                        elif is_video(filename):
+                            video_html = f"<video controls style='max-width:100%;'><source src='{lp}' type='video/mp4'>Your browser does not support the video tag.</video>"
+                            cells.append(new_markdown_cell(video_html))
+                        else:
+                            skip_html = f"<span style='color:#888;'>Preview not available for {filename} (binary or unsupported type)</span>"
+                            cells.append(new_markdown_cell(skip_html))
+                    except Exception as e:
+                        error_html = f"<span style='color:red;'>Failed to process {filename}: {e}</span>"
+                        cells.append(new_markdown_cell(error_html))
 
         key = (safe_name(course_name), safe_name(section_name or ""), safe_name(lecture_name or ""))
         if key in self.transcriptions_map:
@@ -393,25 +591,15 @@ class UdemyCourseNotebookBuilder:
                 created += 1
         return created
 
-# --------- MISSING FUNCTION DEFINITION ADDED BELOW ---------
-def merge_api_rows_with_local(base_folder, course_name, api_rows):
-    """
-    Stub for merging API asset rows with local files.
-    Returns api_rows unchanged.
-    Extend this function to scan local files in base_folder/course_name
-    and attach them to api_rows where appropriate.
-    """
-    # TODO: Implement actual merging logic here!
-    return api_rows
-
-def main():
-    parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks from assets (API plan and/or downloads scan) with transcriptions.")
+def main(course_ids=None):
+    parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks for a single course from assets (API plan and/or downloads scan) with transcriptions.")
     parser.add_argument("--base-folder", default=DEFAULT_BASE_FOLDER, help="Base folder (parent of 'downloads'; notebooks will be created beside it).")
     parser.add_argument("--auth-file", default=DEFAULT_AUTH_FILE, help="Path to Authentication.json with access_token.")
     parser.add_argument("--api-plan", action="store_true", help="Fetch course/lecture/assets from Udemy API and build notebooks.")
     parser.add_argument("--merge-api-with-downloads", action="store_true", help="Attach local files to API assets per lecture.")
     parser.add_argument("--max-workers", type=int, default=16, help="Parallelism for notebook creation.")
     parser.add_argument("--css-file", default=DEFAULT_CSS_FILE, help="Custom CSS file for PDF styling.")
+    parser.add_argument("--course-ids", nargs="+", type=int, help="Course IDs to process.")
 
     implicit_defaults = len(sys.argv) == 1
     args = parser.parse_args()
@@ -438,9 +626,9 @@ def main():
     )
     course_rows_map: Dict[str, List[dict]] = {}
 
+    target_ids: List[int] = args.course_ids if args.course_ids else [2942646]
     if args.api_plan:
         api = UdemyApi(auth_file=args.auth_file)
-        target_ids: List[int] = COURSE_IDS_TO_PROCESS
         id_to_name = {}
 
         for cid in target_ids:
