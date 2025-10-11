@@ -1,17 +1,16 @@
 {
   "ExpandedNodes": [
     "",
-    "\\UdemyAllCourseBuilding\\udemyDownloads",
-    "\\UdemyAllCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals",
-    "\\UdemyAllCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals\\02_Static Data Extraction_Web Scraping",
-    "\\UdemyAllCourseBuilding\\udemyDownloads\\notebooks",
-    "\\UdemyAllCourseBuilding\\udemyDownloads\\scene_frames",
     "\\UdemySpecficCourseBuilding",
     "\\UdemySpecficCourseBuilding\\udemyDownloads",
     "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals",
-    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Web Scraping In Python_ Master The Fundamentals\\03_Scraping Websites That Load Data With Javascript"
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Mastering Python OpenCV_ With 31 Real-World Projects\\Image Basics\\Drawing Shapes & Putting Text",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Mastering Python OpenCV_ With 31 Real-World Projects\\Project 24 _ Detect and Recognize Car License Plate from a video in real time\\Detect and Recognize Car License Plate from a video in real time",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Mastering Python OpenCV_ With 31 Real-World Projects\\Project 24 _ Detect and Recognize Car License Plate from a video in real time\\Detect and Recognize Car License Plate from a video in real time part 2",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Mastering Python OpenCV_ With 31 Real-World Projects\\Project 25_ Right and Left Hand Detection Using Python\\Display Hand Type Left and Right",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Mastering Python OpenCV_ With 31 Real-World Projects\\Project 25_ Right and Left Hand Detection Using Python\\initialize the hand Tracking model",
+    "\\UdemySpecficCourseBuilding\\udemyDownloads\\downloads\\Unlock Python Regular Expressions"
   ],
-  "SelectedNode": "\\UdemySpecficCourseBuilding\\step2_udemyCaptionsWithUrlExcludeCourseID.py",
+  "SelectedNode": "\\UdemySpecficCourseBuilding\\udemyDownloads\\videoTranscriptions.json",
   "PreviewInSolutionExplorer": false
 }

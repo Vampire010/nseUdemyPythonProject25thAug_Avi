@@ -1,4 +1,4 @@
-import os
+﻿import os
 import re
 import json
 import time
@@ -17,18 +17,24 @@ try:
     from requests.adapters import Retry  # type: ignore
 except Exception:
     from urllib3.util.retry import Retry  # fallback
-import subprocess  # For PDF export
+import subprocess
 import base64
 import pandas as pd
 from docx import Document
 
+# ===============================
+# Constants
+# ===============================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 DEFAULT_BASE_FOLDER = r"./udemyDownloads"
 DEFAULT_AUTH_FILE = os.path.join(SCRIPT_DIR, "Authentication.json")
-DEFAULT_CSS_FILE = os.path.join(SCRIPT_DIR, "custom.css")  # Optional custom CSS
+DEFAULT_CSS_FILE = os.path.join(SCRIPT_DIR, "custom.css")
 
+# ===============================
+# Safe name sanitization ✅
+# ===============================
 def safe_name(name: str) -> str:
-    s = re.sub(r'[<>:"/\\|?*\n\r\t]', "_", str(name))
+    s = re.sub(r'[<>:"/\\|?*\n\r\t{}]', "_", str(name))  # sanitized curly braces too
     s = s.strip()
     s = re.sub(r"_+", "_", s)
     s = s.rstrip(" .")
@@ -53,6 +59,9 @@ def _long_path(path: str) -> str:
         return "\\\\?\\" + ap
     return path
 
+# ===============================
+# File type helpers
+# ===============================
 def is_texty(filename: str) -> bool:
     text_extensions = (
         ".txt", ".csv", ".tsv", ".json", ".jsonl", ".xml", ".html", ".htm", ".md", ".yaml", ".yml", ".ini", ".cfg",
@@ -82,6 +91,9 @@ def is_excel(filename: str) -> bool:
 def is_docx(filename: str) -> bool:
     return filename.lower().endswith('.docx')
 
+# ===============================
+# Zip & PDF Preview
+# ===============================
 def extract_zip(zip_path, extract_to):
     try:
         with zipfile.ZipFile(zip_path, 'r') as zip_ref:
@@ -101,19 +113,29 @@ def preview_pdf(pdf_path):
     except Exception as e:
         return f"[Error reading PDF: {e}]"
 
+# ===============================
+# Patched PDF Export Function ✅
+# ===============================
 def export_notebook_to_pdf(notebook_path: str, pdf_path: str, css_path: Optional[str] = None):
     try:
+        safe_pdf_path = pdf_path.replace("{", "(").replace("}", ")")
+        safe_notebook_path = notebook_path.replace("{", "(").replace("}", ")")
+        if safe_notebook_path != notebook_path and os.path.exists(notebook_path):
+            os.rename(notebook_path, safe_notebook_path)
         cmd = [
             sys.executable, "-m", "nbconvert",
             "--to", "webpdf",
-            "--output", pdf_path,
-            notebook_path
+            "--output", safe_pdf_path,
+            safe_notebook_path
         ]
         subprocess.run(cmd, check=True)
-        print(f"[pdf] Exported PDF: {pdf_path}")
+        print(f"[pdf] Exported PDF: {safe_pdf_path}")
     except Exception as e:
         print(f"[pdf] Failed to export PDF for {notebook_path}: {e}")
 
+# ===============================
+# Base helpers
+# ===============================
 def resolve_base_and_downloads(base_folder: str) -> Tuple[str, str]:
     bf = os.path.abspath(base_folder)
     if os.path.basename(bf).lower() == "downloads":
@@ -144,6 +166,9 @@ def load_transcriptions_map(json_path: str) -> Dict[Tuple[str, str, str], str]:
         print(f"[transcriptions] Failed to load transcriptions: {e} (continuing without transcriptions)")
         return {}
 
+# ===============================
+# Udemy API Class
+# ===============================
 class UdemyApi:
     def __init__(self, auth_file="Authentication.json", user_id_hint="256172910", sleep_between_calls=0.05):
         self.auth_file = auth_file
@@ -591,6 +616,9 @@ class UdemyCourseNotebookBuilder:
                 created += 1
         return created
 
+# ===============================
+# main() entry point
+# ===============================
 def main(course_ids=None):
     parser = argparse.ArgumentParser(description="Build Udemy lecture notebooks for a single course from assets (API plan and/or downloads scan) with transcriptions.")
     parser.add_argument("--base-folder", default=DEFAULT_BASE_FOLDER, help="Base folder (parent of 'downloads'; notebooks will be created beside it).")
@@ -618,6 +646,7 @@ def main(course_ids=None):
     transcriptions_path = os.path.join(r"./udemyDownloads/videoTranscriptions.json")
     transcriptions_map = load_transcriptions_map(transcriptions_path)
 
+    from step4_NotebookBuilderTranscriptionExcludeCourseID import UdemyCourseNotebookBuilder
     builder = UdemyCourseNotebookBuilder(
         base_folder=normalized_base,
         max_workers=args.max_workers,
@@ -630,13 +659,13 @@ def main(course_ids=None):
     if args.api_plan:
         api = UdemyApi(auth_file=args.auth_file)
         id_to_name = {}
-
         for cid in target_ids:
             cname = api.get_course_name(cid)
             print(f"[api] Planning course: {cname} ({cid})")
             api_rows = api.enumerate_supplementary_assets(cid, cname)
             rows = api_rows
             if args.merge_api_with_downloads:
+                from step4_NotebookBuilderTranscriptionExcludeCourseID import merge_api_rows_with_local
                 rows = merge_api_rows_with_local(normalized_base, cname, api_rows)
             course_rows_map[cname] = rows
 
